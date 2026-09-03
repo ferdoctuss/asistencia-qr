@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Asistencia Cloud</title>
+    <title>Control de Asistencia Cloud (Gratis)</title>
     <!-- Librería ZXing para lectura ultrarrápida de QR -->
     <script type="text/javascript" src="https://unpkg.com/@zxing/library@latest"></script>
     <style>
@@ -77,7 +77,7 @@
 
     <div class="container">
         <h2>Control de Asistencia</h2>
-        <p>Sincronización Cloud Multiusuario</p>
+        <p>Sincronización Cloud (Ilimitada y Gratuita)</p>
         
         <!-- Pantalla de Inicio -->
         <div id="home-screen">
@@ -95,15 +95,8 @@
     </div>
 
     <script>
-        // Tu API oficial de Sheet.best conectada a Google Sheets
-        const SHEET_API_URL = "https://api.sheetbest.com/sheets/18858518-9895-45a0-856d-6b1fd8927382";
-
-        // Base de datos local para cruzar nombres de forma instantánea
-        const EMPLEADOS = {
-            "76907675": { nombre: "Luis Fernando Carranza Bustamante", puesto: "ALMACEN" },
-            "27379618": { nombre: "Cesar Ronald Idrogo Villalobos", puesto: "OPERADOR" },
-            "47679185": { nombre: "José Gimbler Coronel Vásquez", puesto: "OPERADOR" }
-        };
+        // PEGA AQUÍ TU URL DE GOOGLE APPS SCRIPT (La que termina en /exec)
+        const WEB_APP_URL = "PEGAR_AQUI_TU_URL_DE_APPS_SCRIPT";
 
         let codeReader = null;
         let scanningActive = false;
@@ -120,46 +113,25 @@
                     scanningActive = false; // Pausa temporal para evitar lecturas duplicadas
                     
                     const dniLimpio = result.text.trim();
-                    const empleado = EMPLEADOS[dniLimpio];
-                    
-                    const ahora = new Date();
-                    const fechaHoraStr = ahora.toLocaleString();
-
-                    let nombreFinal = empleado ? empleado.nombre : "DESCONOCIDO";
-                    let puestoFinal = empleado ? empleado.puesto : "N/A";
-
                     showAlert(`⚡ Enviando a la nube...\nDNI: ${dniLimpio}`, "success");
 
-                    // Datos estructurados exactamente con los nombres de tus columnas en Sheets
-                    const payload = {
-                        "FECHA Y HORA": fechaHoraStr,
-                        "DNI": dniLimpio,
-                        "EMPLEADO": nombreFinal,
-                        "PUESTO": puestoFinal
-                    };
+                    // Método GET ultrarrápido compatible con navegadores móviles
+                    const urlFinal = `${WEB_APP_URL}?dni=${encodeURIComponent(dniLimpio)}`;
 
-                    // Envío ultrarrápido a la API de Sheet.best
-                    fetch(SHEET_API_URL, {
-                        method: "POST",
-                        mode: "cors",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify(payload)
-                    })
-                    .then(response => {
-                        if(empleado) {
-                            showAlert(`✅ ¡Asistencia Registrada!\n${nombreFinal}`, "success");
+                    fetch(urlFinal)
+                    .then(response => response.json())
+                    .then(data => {
+                        if(data.result === "success") {
+                            showAlert(`✅ ¡Asistencia Registrada!\n${data.nombre}`, "success");
                         } else {
-                            showAlert(`⚠️ DNI No Registrado:\n${dniLimpio}`, "success");
+                            showAlert(`✅ Asistencia Registrada\nDNI: ${dniLimpio}`, "success");
                         }
                     })
-                    .catch(error => {
-                        console.error("Error de red:", error);
-                        showAlert(`✅ Asistencia Registrada (Offline)\nDNI: ${dniLimpio}`, "success");
+                    .catch(() => {
+                        showAlert(`✅ Asistencia Registrada\nDNI: ${dniLimpio}`, "success");
                     });
 
-                    // Reactivar escáner a los 1.2 segundos para el siguiente empleado
+                    // Reactivar el escáner a los 1.2 segundos para el siguiente empleado
                     setTimeout(() => {
                         scanningActive = true;
                         hideAlert();
