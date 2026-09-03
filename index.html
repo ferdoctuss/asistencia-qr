@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Asistencia Cloud</title>
+    <title>Control de Asistencia QR</title>
     <!-- Librería ZXing para lectura ultrarrápida de QR -->
     <script type="text/javascript" src="https://unpkg.com/@zxing/library@latest"></script>
     <style>
@@ -40,15 +40,22 @@
             cursor: pointer;
             width: 100%;
             transition: background 0.2s ease;
+            margin-bottom: 10px;
         }
         .btn:hover { background-color: #0056b3; }
         .btn-secondary {
             background-color: #dc3545;
-            margin-top: 15px;
             padding: 12px;
             font-size: 16px;
         }
         .btn-secondary:hover { background-color: #c82333; }
+        .btn-reload {
+            background-color: #6c757d;
+            padding: 12px;
+            font-size: 16px;
+        }
+        .btn-reload:hover { background-color: #5a6268; }
+        
         #scanner-container {
             display: none;
             margin-top: 15px;
@@ -59,6 +66,7 @@
             border-radius: 8px;
             object-fit: cover;
             border: 2px solid #007bff;
+            margin-bottom: 10px;
         }
         .alert {
             margin-top: 15px;
@@ -77,11 +85,12 @@
 
     <div class="container">
         <h2>Control de Asistencia</h2>
-        <p>Sincronización Cloud Multiusuario</p>
+        <p>Sincronización Cloud (Rápida y Segura)</p>
         
         <!-- Pantalla de Inicio -->
         <div id="home-screen">
-            <button class="btn" onclick="iniciarEscanner()">⚡ Iniciar Escáner Cloud</button>
+            <button class="btn" onclick="iniciarEscanner()">⚡ Iniciar Escáner</button>
+            <button class="btn btn-reload" onclick="location.reload()">🔄 Recargar Página</button>
         </div>
 
         <!-- Pantalla del Escáner -->
@@ -93,12 +102,13 @@
         <!-- Cuadro de Alertas -->
         <div id="alertBox" class="alert"></div>
 
-        <!-- Iframe oculto para enviar datos a Google sin bloqueos CORS -->
+        <!-- Iframe oculto para eludir bloqueos CORS del navegador móvil -->
         <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;"></iframe>
     </div>
 
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycb8tPZ9CYXZ3UjnnitOKdnpFxAwOtnI75Zr-i6Q0fk3NNXluqmxBqq75BE_08hNtXQr/exec";
+        // Tu URL final de Google Apps Script ya validada
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxBiAQFpY8hz6bxEgOkKjXtehEgwzEtv-7TunbzO2P29YnwwBujOFgZwfSxnyJxyhhU/exec";
 
         let codeReader = null;
         let scanningActive = false;
@@ -117,17 +127,27 @@
                     const dniLimpio = result.text.trim();
                     showAlert(`⚡ Registrando DNI: ${dniLimpio}...`, "success");
 
-                    // Método de envío invisible mediante redirección de imagen/petición GET sorda
-                    // Esto evita por completo cualquier bloqueo de seguridad del navegador móvil
-                    const img = new Image();
-                    img.src = `${WEB_APP_URL}?dni=${encodeURIComponent(dniLimpio)}&nocache=${Date.now()}`;
+                    // Método de envío invisible mediante formulario para evitar congelamientos en iOS/Android
+                    const form = document.createElement("form");
+                    form.method = "GET";
+                    form.action = WEB_APP_URL;
+                    form.target = "hidden_iframe";
 
-                    // Como la petición viaja de inmediato por URL al servidor de Google, damos por exitoso el escaneo al instante
+                    const input = document.createElement("input");
+                    input.type = "hidden";
+                    input.name = "dni";
+                    input.value = dniLimpio;
+
+                    form.appendChild(input);
+                    document.body.appendChild(form);
+                    form.submit();
+                    document.body.removeChild(form);
+
                     setTimeout(() => {
                         showAlert(`✅ ¡Asistencia Registrada!\nDNI: ${dniLimpio}`, "success");
-                    }, 300);
+                    }, 500);
 
-                    // Reactivar el escáner a los 1.5 segundos para el siguiente compañero
+                    // Reactivar el escáner a los 1.5 segundos para el siguiente pase
                     setTimeout(() => {
                         scanningActive = true;
                         hideAlert();
@@ -138,8 +158,8 @@
                 scanningActive = true;
             })
             .catch(err => {
-                console.error("Error al iniciar cámara:", err);
-                showAlert("No se pudo acceder a la cámara.", "error");
+                console.error("Error cámara:", err);
+                showAlert("Permisos de cámara denegados.", "error");
                 detenerEscanner();
             });
         }
