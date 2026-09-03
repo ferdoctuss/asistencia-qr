@@ -2,13 +2,16 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Atrapa la Manzana - Juego Web</title>
     <style>
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
         body {
             background: linear-gradient(135deg, #1e3c72, #2a5298);
@@ -21,15 +24,38 @@
             overflow: hidden;
             color: #fff;
         }
+        
+        /* Botón de recarga provisional para iPhone */
+        #reload-btn {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid #fff;
+            color: #fff;
+            padding: 8px 12px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            border-radius: 20px;
+            cursor: pointer;
+            z-index: 1000;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            backdrop-filter: blur(5px);
+        }
+        #reload-btn:active {
+            background: rgba(255, 255, 255, 0.4);
+            transform: scale(0.95);
+        }
+
         h1 {
             margin-bottom: 10px;
-            font-size: 2rem;
+            font-size: 1.8rem;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
         }
         #game-container {
             position: relative;
-            width: 400px;
-            height: 600px;
+            width: 380px;
+            height: 550px;
             background: rgba(0, 0, 0, 0.3);
             border: 4px solid #fff;
             border-radius: 12px;
@@ -39,7 +65,7 @@
         #basket {
             position: absolute;
             bottom: 20px;
-            left: 150px;
+            left: 140px;
             width: 100px;
             height: 25px;
             background: #ffcc00;
@@ -70,9 +96,9 @@
         #scoreboard {
             display: flex;
             justify-content: space-between;
-            width: 400px;
+            width: 380px;
             margin-bottom: 10px;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             font-weight: bold;
         }
         #start-screen {
@@ -88,7 +114,7 @@
             justify-content: center;
             z-index: 10;
         }
-        button {
+        .main-btn {
             padding: 12px 25px;
             font-size: 1.2rem;
             font-weight: bold;
@@ -100,16 +126,12 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
             transition: background 0.2s, transform 0.1s;
         }
-        button:hover {
-            background: #218838;
-            transform: scale(1.05);
-        }
-        button:active {
+        .main-btn:active {
             transform: scale(0.95);
         }
         #instructions {
             margin-top: 15px;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: #ddd;
             text-align: center;
             padding: 0 20px;
@@ -117,6 +139,8 @@
     </style>
 </head>
 <body>
+
+    <button id="reload-btn" onclick="location.reload();">🔄 Recargar</button>
 
     <h1>Atrapa la Manzana</h1>
     
@@ -129,10 +153,10 @@
         <div id="basket"></div>
         
         <div id="start-screen">
-            <h2 id="game-title" style="margin-bottom: 20px;">¡Listos para jugar!</h2>
-            <button id="start-btn" onclick="startGame()">Iniciar Juego</button>
+            <h2 id="game-title" style="margin-bottom: 20px; text-align: center;">¡Listos para jugar!</h2>
+            <button class="main-btn" id="start-btn" onclick="startGame()">Iniciar Juego</button>
             <div id="instructions">
-                Usa las <b>flechas del teclado (← →)</b> o desliza el dedo en la pantalla táctil para mover la canasta. ¡No dejes caer las manzanas!
+                Desliza el dedo dentro del recuadro para mover la canasta. ¡No dejes caer las manzanas!
             </div>
         </div>
     </div>
@@ -151,21 +175,25 @@
         let gameInterval;
         let appleInterval;
         let apples = [];
-        let basketX = 150;
-        const basketSpeed = 25;
+        let basketX = 140;
         let isPlaying = false;
 
-        // Control de teclado
-        let keys = {};
-        window.addEventListener('keydown', (e) => keys[e.key] = true);
-        window.addEventListener('keyup', (e) => keys[e.key] = false);
-
-        // Control táctil para celulares
+        // Control táctil optimizado para iPhone dentro del contenedor
         gameContainer.addEventListener('touchmove', (e) => {
+            e.preventDefault(); // Evita el scroll indeseado de la página al jugar
             let touchX = e.touches[0].clientX - gameContainer.getBoundingClientRect().left;
             basketX = touchX - 50;
             if (basketX < 0) basketX = 0;
-            if (basketX > 300) basketX = 300;
+            if (basketX > 280) basketX = 280; // Ancho contenedor (380) - Ancho canasta (100)
+            basket.style.left = basketX + 'px';
+        }, { passive: false });
+
+        // Control opcional con el mouse para pruebas en PC
+        gameContainer.addEventListener('mousemove', (e) => {
+            let mouseX = e.clientX - gameContainer.getBoundingClientRect().left;
+            basketX = mouseX - 50;
+            if (basketX < 0) basketX = 0;
+            if (basketX > 280) basketX = 280;
             basket.style.left = basketX + 'px';
         });
 
@@ -175,38 +203,27 @@
             lives = 3;
             updateUI();
             
-            // Limpiar manzanas viejas si las hay
             document.querySelectorAll('.apple').forEach(a => a.remove());
             apples = [];
 
             isPlaying = true;
             gameInterval = setInterval(updateGame, 20);
-            appleInterval = setInterval(createApple, 1000);
+            appleInterval = setInterval(createApple, 900);
         }
 
         function createApple() {
             if (!isPlaying) return;
             const apple = document.createElement('div');
             apple.classList.add('apple');
-            let posX = Math.random() * 370; // Ancho contenedor (400) - Ancho manzana (30)
+            let posX = Math.random() * 350; // 380 - 30
             apple.style.left = posX + 'px';
             apple.style.top = '-30px';
             
             gameContainer.appendChild(apple);
-            apples.push({ element: apple, x: posX, y: -30, speed: 3 + Math.random() * 3 });
+            apples.push({ element: apple, x: posX, y: -30, speed: 3.5 + Math.random() * 2.5 });
         }
 
         function updateGame() {
-            // Movimiento de la canasta por teclado
-            if (keys['ArrowLeft'] && basketX > 0) {
-                basketX -= basketSpeed;
-            }
-            if (keys['ArrowRight'] && basketX < 300) {
-                basketX += basketSpeed;
-            }
-            basket.style.left = basketX + 'px';
-
-            // Actualizar posición de las manzanas
             for (let i = apples.length - 1; i >= 0; i--) {
                 let a = apples[i];
                 a.y += a.speed;
@@ -214,7 +231,7 @@
 
                 // Colisión con la canasta
                 if (
-                    a.y >= 535 && a.y <= 560 &&
+                    a.y >= 485 && a.y <= 515 &&
                     a.x + 30 >= basketX && a.x <= basketX + 100
                 ) {
                     a.element.remove();
@@ -223,7 +240,7 @@
                     updateUI();
                 } 
                 // Manzana caída al suelo
-                else if (a.y > 570) {
+                else if (a.y > 525) {
                     a.element.remove();
                     apples.splice(i, 1);
                     lives--;
@@ -245,7 +262,7 @@
             clearInterval(gameInterval);
             clearInterval(appleInterval);
             
-            gameTitle.innerText = `¡Juego Terminado!\nPuntuación final: ${score}`;
+            gameTitle.innerHTML = `¡Juego Terminado!<br><span style="font-size: 1.2rem;">Puntuación: ${score}</span>`;
             startBtn.innerText = 'Jugar de Nuevo';
             startScreen.style.display = 'flex';
         }
