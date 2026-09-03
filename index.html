@@ -15,7 +15,6 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
             min-height: 90vh;
         }
         .container {
@@ -49,6 +48,12 @@
             font-size: 16px;
         }
         .btn-secondary:hover { background-color: #c82333; }
+        .btn-database {
+            background-color: #28a745;
+            padding: 14px;
+            font-size: 16px;
+        }
+        .btn-database:hover { background-color: #218838; }
         .btn-reload {
             background-color: #6c757d;
             padding: 12px;
@@ -56,7 +61,7 @@
         }
         .btn-reload:hover { background-color: #5a6268; }
         
-        #scanner-container {
+        #scanner-container, #database-screen {
             display: none;
             margin-top: 15px;
         }
@@ -79,18 +84,90 @@
         }
         .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
         .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
+        /* Estilos del historial local */
+        .history-container {
+            margin-top: 25px;
+            background: #fdfdfd;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: left;
+        }
+        .history-title {
+            font-size: 15px;
+            font-weight: bold;
+            color: #444;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .history-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .history-item {
+            font-size: 14px;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+        }
+        .history-time {
+            color: #888;
+            font-size: 12px;
+        }
+        .btn-clear {
+            background: none;
+            border: none;
+            color: #dc3545;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* Contenedor del Iframe de Google Sheets */
+        .iframe-wrapper {
+            width: 100%;
+            height: 60vh;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid #e0e0e0;
+            margin-bottom: 15px;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
     </style>
 </head>
 <body>
 
     <div class="container">
         <h2>Control de Asistencia</h2>
-        <p>Sincronización Cloud (Rápida y Segura)</p>
+        <p>Sincronización Cloud (EURECA)</p>
         
-        <!-- Pantalla de Inicio -->
+        <!-- Pantalla Principal -->
         <div id="home-screen">
             <button class="btn" onclick="iniciarEscanner()">⚡ Iniciar Escáner</button>
+            <button class="btn btn-database" onclick="mostrarBaseDatos()">📊 Ver Base de Datos</button>
             <button class="btn btn-reload" onclick="location.reload()">🔄 Recargar Página</button>
+
+            <!-- Historial Rápido -->
+            <div class="history-container">
+                <div class="history-title">
+                    ⏱️ Últimos Escaneos
+                    <button class="btn-clear" onclick="limpiarHistorial()">Borrar</button>
+                </div>
+                <ul class="history-list" id="historyList"></ul>
+            </div>
         </div>
 
         <!-- Pantalla del Escáner -->
@@ -98,20 +175,32 @@
             <video id="video" muted playsinline></video>
             <button class="btn btn-secondary" onclick="detenerEscanner()">Cerrar Cámara</button>
         </div>
+
+        <!-- Pantalla de la Base de Datos en Google Sheets -->
+        <div id="database-screen">
+            <div class="iframe-wrapper">
+                <!-- Se usa el ID exacto de tu documento, apuntando al htmlembed de la pestaña DATA (gid=0) -->
+                <iframe src="https://docs.google.com/spreadsheets/d/18MHyH8JnecfC4i4ih0PRfffTR0DkRQWdKxaky9ziUw0/htmlembed?gid=0&widget=false&chrome=false" title="Base de Datos Asistencia"></iframe>
+            </div>
+            <button class="btn btn-secondary" onclick="ocultarBaseDatos()">Volver al Inicio</button>
+        </div>
         
         <!-- Cuadro de Alertas -->
         <div id="alertBox" class="alert"></div>
 
-        <!-- Iframe oculto para eludir bloqueos CORS del navegador móvil -->
+        <!-- Iframe oculto para eludir bloqueos CORS (Pilar EURECA) -->
         <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;"></iframe>
     </div>
 
     <script>
-        // Tu URL final de Google Apps Script ya validada
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxBiAQFpY8hz6bxEgOkKjXtehEgwzEtv-7TunbzO2P29YnwwBujOFgZwfSxnyJxyhhU/exec";
 
         let codeReader = null;
         let scanningActive = false;
+
+        window.onload = function() {
+            cargarHistorial();
+        };
 
         function iniciarEscanner() {
             document.getElementById("home-screen").style.display = "none";
@@ -127,7 +216,8 @@
                     const dniLimpio = result.text.trim();
                     showAlert(`⚡ Registrando DNI: ${dniLimpio}...`, "success");
 
-                    // Método de envío invisible mediante formulario para evitar congelamientos en iOS/Android
+                    agregarAHistorial(dniLimpio);
+
                     const form = document.createElement("form");
                     form.method = "GET";
                     form.action = WEB_APP_URL;
@@ -147,7 +237,6 @@
                         showAlert(`✅ ¡Asistencia Registrada!\nDNI: ${dniLimpio}`, "success");
                     }, 500);
 
-                    // Reactivar el escáner a los 1.5 segundos para el siguiente pase
                     setTimeout(() => {
                         scanningActive = true;
                         hideAlert();
@@ -172,6 +261,56 @@
             document.getElementById("scanner-container").style.display = "none";
             document.getElementById("home-screen").style.display = "block";
             hideAlert();
+        }
+
+        /* --- Funciones de Navegación de Pantallas --- */
+        function mostrarBaseDatos() {
+            document.getElementById("home-screen").style.display = "none";
+            document.getElementById("database-screen").style.display = "block";
+        }
+
+        function ocultarBaseDatos() {
+            document.getElementById("database-screen").style.display = "none";
+            document.getElementById("home-screen").style.display = "block";
+        }
+
+        /* --- Funciones de Historial Local --- */
+        function cargarHistorial() {
+            const historyList = document.getElementById('historyList');
+            historyList.innerHTML = ''; 
+            
+            let historial = JSON.parse(localStorage.getItem('historial_qr_asistencia')) || [];
+            
+            if (historial.length === 0) {
+                historyList.innerHTML = '<li class="history-item" style="color:#999; justify-content:center;">No hay escaneos recientes</li>';
+                return;
+            }
+
+            historial.forEach(item => {
+                const li = document.createElement('li');
+                li.className = 'history-item';
+                li.innerHTML = `<span>DNI: <b>${item.dni}</b></span> <span class="history-time">${item.hora}</span>`;
+                historyList.appendChild(li);
+            });
+        }
+
+        function agregarAHistorial(dni) {
+            let historial = JSON.parse(localStorage.getItem('historial_qr_asistencia')) || [];
+            const ahora = new Date();
+            const horaStr = ahora.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+            
+            historial.unshift({ dni: dni, hora: horaStr }); 
+            if(historial.length > 15) historial.pop();
+            
+            localStorage.setItem('historial_qr_asistencia', JSON.stringify(historial));
+            cargarHistorial();
+        }
+
+        function limpiarHistorial() {
+            if(confirm("¿Borrar el historial local? (La base de datos de Google no se borrará)")) {
+                localStorage.removeItem('historial_qr_asistencia');
+                cargarHistorial();
+            }
         }
 
         function showAlert(message, type) {
