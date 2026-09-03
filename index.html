@@ -103,7 +103,7 @@
     </div>
 
     <script>
-        // Tu URL exacta generada en Google Apps Script
+        // URL exacta configurada con acceso público en Google Apps Script
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzNHnUUBS1w2grFTCdTFYbV-IFeHfDWk4TlOCx4z6Z-Uy-8kLcMluZkyivBY_9zUH9C/exec";
 
         let html5QrCode = null;
@@ -155,7 +155,7 @@
             // Limpiamos el texto por si el QR tiene espacios o saltos de línea ocultos
             const dniLimpio = decodedText.trim();
 
-            showAlert(`Procesando DNI: ${dniLimpio}...`, "success");
+            showAlert(`Registrando DNI: ${dniLimpio}...`, "success");
 
             fetch(WEB_APP_URL, {
                 method: "POST",
@@ -166,7 +166,7 @@
                 body: JSON.stringify({ dni: dniLimpio })
             })
             .then(() => {
-                // Al ser no-cors, asumimos el envío exitoso para dar agilidad al escaneo
+                // Notificación visual de éxito inmediata
                 showAlert(`¡Asistencia Registrada!\nDNI: ${dniLimpio}`, "success");
                 
                 // Cierra la cámara y vuelve al menú principal tras 3 segundos
