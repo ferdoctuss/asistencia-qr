@@ -5,35 +5,58 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Control de Asistencia - Consorcio Vial Baas</title>
     
-    <!-- Configuración del ícono para iPhone (Apple Touch Icon) y Android -->
+    <!-- Configuración del ícono para dispositivos móviles -->
     <link rel="apple-touch-icon" href="icono.png">
     <link rel="icon" type="image/png" href="icono.png">
 
     <!-- Librería ZXing para lectura ultrarrápida de QR -->
     <script type="text/javascript" src="https://unpkg.com/@zxing/library@latest"></script>
     <style>
+        :root {
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --subtext-color: #555555;
+            --border-color: #e0e0e0;
+            --history-bg: #fdfdfd;
+            --item-border: #eee;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-color: #f1f1f1;
+            --subtext-color: #aaaaaa;
+            --border-color: #333333;
+            --history-bg: #252525;
+            --item-border: #333;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f7f6;
+            background-color: var(--bg-color);
+            color: var(--text-color);
             margin: 0;
             padding: 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
             min-height: 90vh;
+            transition: background 0.3s ease, color 0.3s ease;
         }
         .container {
             max-width: 480px;
             width: 100%;
-            background: white;
+            background: var(--card-bg);
             padding: 25px;
             border-radius: 16px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             text-align: center;
             position: relative;
+            transition: background 0.3s ease;
         }
         
-        /* Estilos del Encabezado con Logo Corporativo */
+        /* Encabezado con Logo, Títulos y Configuración */
         .header-box {
             display: flex;
             align-items: center;
@@ -56,8 +79,8 @@
         .header-titles {
             text-align: center;
             width: 100%;
-            padding-left: 50px; /* Espacio para que el logo no pise el texto en pantallas chicas */
-            padding-right: 10px;
+            padding-left: 50px;
+            padding-right: 40px; /* Espacio para el engranaje */
         }
         .company-title {
             font-size: 16px;
@@ -66,12 +89,29 @@
             margin: 0;
             letter-spacing: 0.5px;
         }
+        [data-theme="dark"] .company-title { color: #90cdf4; }
+
         .app-subtitle {
             font-size: 14px;
             font-weight: 600;
-            color: #555;
+            color: var(--subtext-color);
             margin: 4px 0 0 0;
         }
+
+        /* Botón de Ajustes (Engranaje) */
+        .settings-btn {
+            position: absolute;
+            right: 0;
+            top: 5px;
+            background: none;
+            border: none;
+            font-size: 22px;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+        .settings-btn:hover { background: rgba(0,0,0,0.05); }
 
         .btn {
             background-color: #007bff;
@@ -105,8 +145,14 @@
             font-size: 16px;
         }
         .btn-reload:hover { background-color: #5a6268; }
+        .btn-dni-mode {
+            background-color: #6f42c1;
+            padding: 14px;
+            font-size: 16px;
+        }
+        .btn-dni-mode:hover { background-color: #5a32a3; }
         
-        #scanner-container, #database-screen {
+        #scanner-container, #database-screen, #manual-dni-screen {
             display: none;
             margin-top: 15px;
         }
@@ -133,16 +179,17 @@
         /* Estilos del historial local */
         .history-container {
             margin-top: 25px;
-            background: #fdfdfd;
-            border: 1px solid #e0e0e0;
+            background: var(--history-bg);
+            border: 1px solid var(--border-color);
             border-radius: 12px;
             padding: 15px;
             text-align: left;
+            transition: background 0.3s ease, border 0.3s ease;
         }
         .history-title {
             font-size: 15px;
             font-weight: bold;
-            color: #444;
+            color: var(--text-color);
             margin-bottom: 10px;
             border-bottom: 2px solid #007bff;
             padding-bottom: 5px;
@@ -160,29 +207,74 @@
         .history-item {
             font-size: 14px;
             padding: 10px 0;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid var(--item-border);
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
         .history-name {
             font-weight: bold;
-            color: #222;
+            color: var(--text-color);
         }
         .history-time {
-            color: #888;
+            color: var(--subtext-color);
             font-size: 12px;
             white-space: nowrap;
             margin-left: 10px;
         }
-        .btn-clear {
-            background: none;
-            border: none;
-            color: #dc3545;
-            font-size: 12px;
-            font-weight: bold;
-            cursor: pointer;
+
+        /* Input DNI manual */
+        .dni-input {
+            width: 100%;
+            padding: 14px;
+            font-size: 18px;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+            text-align: center;
+            background: var(--card-bg);
+            color: var(--text-color);
         }
+
+        /* Modal de Configuración */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            padding: 25px;
+            border-radius: 12px;
+            width: 85%;
+            max-width: 320px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .modal-content h3 { margin-top: 0; color: #007bff; }
+        .modal-btn {
+            background-color: #f1f1f1;
+            color: #333;
+            border: none;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+            transition: background 0.2s;
+        }
+        .modal-btn:hover { background-color: #e0e0e0; }
+        [data-theme="dark"] .modal-btn { background-color: #333; color: #fff; }
+        [data-theme="dark"] .modal-btn:hover { background-color: #444; }
 
         /* Contenedor del Iframe */
         .iframe-wrapper {
@@ -190,7 +282,7 @@
             height: 60vh;
             border-radius: 8px;
             overflow: hidden;
-            border: 2px solid #e0e0e0;
+            border: 2px solid var(--border-color);
             margin-bottom: 15px;
         }
         iframe {
@@ -200,28 +292,29 @@
         }
     </style>
 </head>
-<body>
+<body data-theme="light">
 
     <div class="container">
-        <!-- Encabezado con Logo y Títulos Profesionales -->
+        <!-- Encabezado con Logo, Títulos y Configuración -->
         <div class="header-box">
             <img src="icono.png" alt="Logo" class="company-logo">
             <div class="header-titles">
                 <h1 class="company-title">CONSORCIO VIAL BAAS</h1>
                 <p class="app-subtitle">Control de asistencia</p>
             </div>
+            <button class="settings-btn" onclick="abrirConfiguracion()" title="Configuración">⚙️</button>
         </div>
         
         <!-- Pantalla Principal -->
         <div id="home-screen">
             <button class="btn" onclick="iniciarEscanner()">⚡ Iniciar control de asistencia</button>
+            <button class="btn btn-dni-mode" onclick="mostrarPantallaDni()">🆔 Registrar con DNI</button>
             <button class="btn btn-database" onclick="mostrarBaseDatos()">📊 Ver base todas las asistencias</button>
 
-            <!-- Historial Rápido -->
+            <!-- Historial Rápido (Sin botón Borrar) -->
             <div class="history-container">
                 <div class="history-title">
                     ⏱️ Últimos Escaneos
-                    <button class="btn-clear" onclick="limpiarHistorial()">Borrar</button>
                 </div>
                 <ul class="history-list" id="historyList"></ul>
             </div>
@@ -231,6 +324,14 @@
         <div id="scanner-container">
             <video id="video" muted playsinline></video>
             <button class="btn btn-secondary" onclick="detenerEscanner()">Cerrar Cámara</button>
+        </div>
+
+        <!-- Pantalla de Registro Manual por DNI -->
+        <div id="manual-dni-screen">
+            <p style="font-weight: bold; margin-bottom: 10px;">Ingrese el DNI del empleado:</p>
+            <input type="tel" id="inputDniManual" class="dni-input" placeholder="Ej. 76907675" maxlength="12">
+            <button class="btn" onclick="registrarDniManual()">Registrar DNI</button>
+            <button class="btn btn-secondary" onclick="ocultarPantallaDni()">Volver al Inicio</button>
         </div>
 
         <!-- Pantalla de la Base de Datos -->
@@ -253,6 +354,16 @@
         <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;"></iframe>
     </div>
 
+    <!-- Modal de Configuración -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <h3>⚙️ Configuración</h3>
+            <button class="modal-btn" onclick="alternarModoOscuro()">🌙 Cambiar Modo Oscuro</button>
+            <button class="modal-btn" onclick="verInfoApp()">ℹ️ Info de la app</button>
+            <button class="modal-btn" style="background-color: #dc3545; color: white;" onclick="cerrarConfiguracion()">Cerrar</button>
+        </div>
+    </div>
+
     <script>
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxBiAQFpY8hz6bxEgOkKjXtehEgwzEtv-7TunbzO2P29YnwwBujOFgZwfSxnyJxyhhU/exec";
         
@@ -264,6 +375,10 @@
         window.onload = function() {
             cargarHistorial();
             descargarListaEmpleados(); 
+            
+            // Cargar preferencia de Modo Oscuro guardada
+            const savedTheme = localStorage.getItem('theme_mode') || 'light';
+            document.body.setAttribute('data-theme', savedTheme);
         };
 
         function descargarListaEmpleados() {
@@ -310,6 +425,47 @@
             }
         }
 
+        function procesarAsistencia(dniLimpio) {
+            const tiempoActual = Date.now();
+            // Si no está en empleados, muestra el número de DNI tal cual
+            const nombreMostrar = empleadosMap[dniLimpio] || dniLimpio;
+
+            if (ultimosEscaneos[dniLimpio] && (tiempoActual - ultimosEscaneos[dniLimpio]) < 30000) {
+                showAlert(`❌ ${nombreMostrar}\nYA FUE REGISTRADO`, "error");
+                setTimeout(() => { hideAlert(); }, 2000);
+                return;
+            }
+
+            emitirSonidoYVibracion();
+            ultimosEscaneos[dniLimpio] = tiempoActual;
+
+            showAlert(`⚡ Registrando: ${nombreMostrar}...`, "success");
+            agregarAHistorial(dniLimpio, nombreMostrar);
+
+            const form = document.createElement("form");
+            form.method = "GET";
+            form.action = WEB_APP_URL;
+            form.target = "hidden_iframe";
+
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = "dni";
+            input.value = dniLimpio;
+
+            form.appendChild(input);
+            document.body.appendChild(form);
+            form.submit();
+            document.body.removeChild(form);
+
+            setTimeout(() => {
+                showAlert(`✅ ¡Asistencia Registrada!\n${nombreMostrar}`, "success");
+            }, 500);
+
+            setTimeout(() => {
+                hideAlert();
+            }, 2000);
+        }
+
         function iniciarEscanner() {
             document.getElementById("home-screen").style.display = "none";
             document.getElementById("scanner-container").style.display = "block";
@@ -320,50 +476,8 @@
             codeReader.decodeFromVideoDevice(undefined, 'video', (result, err) => {
                 if (result && scanningActive) {
                     scanningActive = false; 
-                    
-                    const dniLimpio = result.text.trim();
-                    const tiempoActual = Date.now();
-                    const nombreMostrar = empleadosMap[dniLimpio] || dniLimpio;
-
-                    if (ultimosEscaneos[dniLimpio] && (tiempoActual - ultimosEscaneos[dniLimpio]) < 30000) {
-                        showAlert(`❌ ${nombreMostrar}\nYA FUE REGISTRADO`, "error");
-                        
-                        setTimeout(() => {
-                            scanningActive = true;
-                            hideAlert();
-                        }, 2000);
-                        return;
-                    }
-
-                    emitirSonidoYVibracion();
-                    ultimosEscaneos[dniLimpio] = tiempoActual;
-
-                    showAlert(`⚡ Registrando: ${nombreMostrar}...`, "success");
-                    agregarAHistorial(dniLimpio, nombreMostrar);
-
-                    const form = document.createElement("form");
-                    form.method = "GET";
-                    form.action = WEB_APP_URL;
-                    form.target = "hidden_iframe";
-
-                    const input = document.createElement("input");
-                    input.type = "hidden";
-                    input.name = "dni";
-                    input.value = dniLimpio;
-
-                    form.appendChild(input);
-                    document.body.appendChild(form);
-                    form.submit();
-                    document.body.removeChild(form);
-
-                    setTimeout(() => {
-                        showAlert(`✅ ¡Asistencia Registrada!\n${nombreMostrar}`, "success");
-                    }, 500);
-
-                    setTimeout(() => {
-                        scanningActive = true;
-                        hideAlert();
-                    }, 2000);
+                    procesarAsistencia(result.text.trim());
+                    setTimeout(() => { scanningActive = true; }, 2000);
                 }
             })
             .then(() => {
@@ -386,6 +500,31 @@
             hideAlert();
         }
 
+        // Funciones para Registro Manual por DNI
+        function mostrarPantallaDni() {
+            document.getElementById("home-screen").style.display = "none";
+            document.getElementById("manual-dni-screen").style.display = "block";
+            hideAlert();
+        }
+
+        function ocultarPantallaDni() {
+            document.getElementById("manual-dni-screen").style.display = "none";
+            document.getElementById("home-screen").style.display = "block";
+            document.getElementById("inputDniManual").value = "";
+            hideAlert();
+        }
+
+        function registrarDniManual() {
+            const dniVal = document.getElementById("inputDniManual").value.trim();
+            if(!dniVal) {
+                showAlert("⚠️ Ingresa un DNI válido", "error");
+                return;
+            }
+            procesarAsistencia(dniVal);
+            document.getElementById("inputDniManual").value = "";
+            ocultarPantallaDni();
+        }
+
         function mostrarBaseDatos() {
             document.getElementById("home-screen").style.display = "none";
             document.getElementById("database-screen").style.display = "block";
@@ -396,6 +535,27 @@
             document.getElementById("home-screen").style.display = "block";
         }
 
+        /* --- Configuración y Modal --- */
+        function abrirConfiguracion() {
+            document.getElementById("settingsModal").style.display = "flex";
+        }
+
+        function cerrarConfiguracion() {
+            document.getElementById("settingsModal").style.display = "none";
+        }
+
+        function alternarModoOscuro() {
+            const currentTheme = document.body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme_mode', newTheme);
+        }
+
+        function verInfoApp() {
+            alert("App creada por Fernando Carranza");
+        }
+
+        /* --- Historial Local --- */
         function cargarHistorial() {
             const historyList = document.getElementById('historyList');
             historyList.innerHTML = ''; 
@@ -426,13 +586,6 @@
             
             localStorage.setItem('historial_qr_asistencia', JSON.stringify(historial));
             cargarHistorial();
-        }
-
-        function limpiarHistorial() {
-            if(confirm("¿Borrar el historial local? (La base de datos de Google no se borrará)")) {
-                localStorage.removeItem('historial_qr_asistencia');
-                cargarHistorial();
-            }
         }
 
         function showAlert(message, type) {
