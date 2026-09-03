@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Asistencia Cloud (Gratis)</title>
+    <title>Control de Asistencia Cloud</title>
     <!-- Librería ZXing para lectura ultrarrápida de QR -->
     <script type="text/javascript" src="https://unpkg.com/@zxing/library@latest"></script>
     <style>
@@ -95,8 +95,8 @@
     </div>
 
     <script>
-        // PEGA AQUÍ TU URL DE GOOGLE APPS SCRIPT (La que termina en /exec)
-        const WEB_APP_URL = "PEGAR_AQUI_TU_URL_DE_APPS_SCRIPT";
+        // Nueva URL exacta generada en Google Apps Script
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycb8tPZ9CYXZ3UjnnitOKdnpFxAwOtnI75Zr-i6Q0fk3NNXluqmxBqq75BE_08hNtXQr/exec";
 
         let codeReader = null;
         let scanningActive = false;
@@ -115,7 +115,6 @@
                     const dniLimpio = result.text.trim();
                     showAlert(`⚡ Enviando a la nube...\nDNI: ${dniLimpio}`, "success");
 
-                    // Método GET ultrarrápido compatible con navegadores móviles
                     const urlFinal = `${WEB_APP_URL}?dni=${encodeURIComponent(dniLimpio)}`;
 
                     fetch(urlFinal)
@@ -131,7 +130,7 @@
                         showAlert(`✅ Asistencia Registrada\nDNI: ${dniLimpio}`, "success");
                     });
 
-                    // Reactivar el escáner a los 1.2 segundos para el siguiente empleado
+                    // Reactivar el escáner a los 1.2 segundos
                     setTimeout(() => {
                         scanningActive = true;
                         hideAlert();
@@ -143,7 +142,7 @@
             })
             .catch(err => {
                 console.error("Error al iniciar cámara:", err);
-                showAlert("No se pudo acceder a la cámara. Revisa los permisos.", "error");
+                showAlert("No se pudo acceder a la cámara.", "error");
                 detenerEscanner();
             });
         }
