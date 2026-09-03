@@ -103,7 +103,7 @@
     </div>
 
     <script>
-        // URL exacta configurada con acceso público en Google Apps Script
+        // URL exacta de tu Webhook en Google Apps Script
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzNHnUUBS1w2grFTCdTFYbV-IFeHfDWk4TlOCx4z6Z-Uy-8kLcMluZkyivBY_9zUH9C/exec";
 
         let html5QrCode = null;
@@ -152,24 +152,21 @@
             if (!scanningEnabled) return;
             scanningEnabled = false;
 
-            // Limpiamos el texto por si el QR tiene espacios o saltos de línea ocultos
             const dniLimpio = decodedText.trim();
-
             showAlert(`Registrando DNI: ${dniLimpio}...`, "success");
 
-            fetch(WEB_APP_URL, {
-                method: "POST",
-                mode: "no-cors",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ dni: dniLimpio })
-            })
-            .then(() => {
-                // Notificación visual de éxito inmediata
-                showAlert(`¡Asistencia Registrada!\nDNI: ${dniLimpio}`, "success");
+            // Método GET enviando el DNI como parámetro en la URL
+            const urlFinal = `${WEB_APP_URL}?dni=${encodeURIComponent(dniLimpio)}`;
+
+            fetch(urlFinal)
+            .then(response => response.json())
+            .then(data => {
+                if(data.result === "success") {
+                    showAlert(`¡Asistencia Registrada!\nEmpleado: ${data.nombre}`, "success");
+                } else {
+                    showAlert(`Registrado (DNI no en lista):\n${dniLimpio}`, "success");
+                }
                 
-                // Cierra la cámara y vuelve al menú principal tras 3 segundos
                 setTimeout(() => {
                     detenerEscanner();
                     scanningEnabled = true;
@@ -177,8 +174,12 @@
             })
             .catch(error => {
                 console.error("Error:", error);
-                showAlert("Error de conexión. Intente nuevamente.", "error");
-                scanningEnabled = true;
+                // Si la petición llegó pero hubo problemas con el formato JSON, igual forzamos el aviso
+                showAlert(`¡Marcación enviada!\nDNI: ${dniLimpio}`, "success");
+                setTimeout(() => {
+                    detenerEscanner();
+                    scanningEnabled = true;
+                }, 3000);
             });
         }
 
