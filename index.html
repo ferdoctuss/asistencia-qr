@@ -26,7 +26,7 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             text-align: center;
         }
-        h2 { color: #333; margin-bottom: 5px; }
+        h2 { color: #333; margin-bottom: 20px; }
         .btn {
             background-color: #007bff;
             color: white;
@@ -152,12 +152,6 @@
     <div class="container">
         <h2>Control de Asistencia</h2>
         
-        <!-- Nuevo Subtítulo en Rojo y Botón Global de Recarga -->
-        <p style="color: #dc3545; font-weight: bold; font-size: 15px; margin-bottom: 10px;">
-            Recarga la página para ver los últimos registros
-        </p>
-        <button class="btn btn-reload" style="margin-bottom: 20px;" onclick="location.reload()">🔄 Recargar Página</button>
-        
         <!-- Pantalla Principal -->
         <div id="home-screen">
             <button class="btn" onclick="iniciarEscanner()">⚡ Iniciar Escáner</button>
@@ -181,6 +175,12 @@
 
         <!-- Pantalla de la Base de Datos en Google Sheets -->
         <div id="database-screen">
+            <!-- Subtítulo en Rojo y Botón de Recarga reubicados aquí -->
+            <p style="color: #dc3545; font-weight: bold; font-size: 15px; margin-bottom: 10px;">
+                Recarga la página para ver los últimos registros
+            </p>
+            <button class="btn btn-reload" style="margin-bottom: 20px;" onclick="location.reload()">🔄 Recargar Página</button>
+
             <div class="iframe-wrapper">
                 <iframe src="https://docs.google.com/spreadsheets/d/18MHyH8JnecfC4i4ih0PRfffTR0DkRQWdKxaky9ziUw0/htmlembed?gid=0&widget=false&chrome=false" title="Base de Datos Asistencia"></iframe>
             </div>
