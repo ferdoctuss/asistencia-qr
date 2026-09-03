@@ -95,7 +95,6 @@
     </div>
 
     <script>
-        // Nueva URL exacta generada en Google Apps Script
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycb8tPZ9CYXZ3UjnnitOKdnpFxAwOtnI75Zr-i6Q0fk3NNXluqmxBqq75BE_08hNtXQr/exec";
 
         let codeReader = null;
@@ -110,10 +109,10 @@
 
             codeReader.decodeFromVideoDevice(undefined, 'video', (result, err) => {
                 if (result && scanningActive) {
-                    scanningActive = false; // Pausa temporal para evitar lecturas duplicadas
+                    scanningActive = false; 
                     
                     const dniLimpio = result.text.trim();
-                    showAlert(`⚡ Enviando a la nube...\nDNI: ${dniLimpio}`, "success");
+                    showAlert(`⚡ Conectando con Google...\nDNI: ${dniLimpio}`, "success");
 
                     const urlFinal = `${WEB_APP_URL}?dni=${encodeURIComponent(dniLimpio)}`;
 
@@ -121,20 +120,19 @@
                     .then(response => response.json())
                     .then(data => {
                         if(data.result === "success") {
-                            showAlert(`✅ ¡Asistencia Registrada!\n${data.nombre}`, "success");
+                            showAlert(`✅ ¡Registrado en Google Sheets!\nEmpleado: ${data.nombre}`, "success");
                         } else {
-                            showAlert(`✅ Asistencia Registrada\nDNI: ${dniLimpio}`, "success");
+                            showAlert(`❌ Error en servidor:\n${data.message}`, "error");
                         }
                     })
-                    .catch(() => {
-                        showAlert(`✅ Asistencia Registrada\nDNI: ${dniLimpio}`, "success");
+                    .catch(error => {
+                        showAlert(`❌ Error de conexión:\nNo se pudo contactar con Google`, "error");
                     });
 
-                    // Reactivar el escáner a los 1.2 segundos
                     setTimeout(() => {
                         scanningActive = true;
                         hideAlert();
-                    }, 1200);
+                    }, 2500);
                 }
             })
             .then(() => {
