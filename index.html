@@ -5,11 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Control de Asistencia - Consorcio Vial Baas</title>
     
-    <!-- Configuración del ícono para dispositivos móviles -->
     <link rel="apple-touch-icon" href="icono.png">
     <link rel="icon" type="image/png" href="icono.png">
 
-    <!-- Librería ZXing para lectura ultrarrápida de QR -->
     <script type="text/javascript" src="https://unpkg.com/@zxing/library@latest"></script>
     <style>
         :root {
@@ -43,7 +41,6 @@
             align-items: center;
             min-height: 90vh;
             transition: background 0.3s ease, color 0.3s ease;
-            /* Deshabilitar gestos de zoom del navegador */
             touch-action: manipulation;
             -webkit-text-size-adjust: 100%;
         }
@@ -142,6 +139,12 @@
             font-size: 16px;
         }
         .btn-database:hover { background-color: #218838; }
+        .btn-employees {
+            background-color: #6f42c1;
+            padding: 14px;
+            font-size: 16px;
+        }
+        .btn-employees:hover { background-color: #5a32a3; }
         .btn-reload {
             background-color: #6c757d;
             padding: 12px;
@@ -149,13 +152,13 @@
         }
         .btn-reload:hover { background-color: #5a6268; }
         .btn-dni-mode {
-            background-color: #6f42c1;
+            background-color: #17a2b8;
             padding: 14px;
             font-size: 16px;
         }
-        .btn-dni-mode:hover { background-color: #5a32a3; }
+        .btn-dni-mode:hover { background-color: #117a8b; }
         
-        #scanner-container, #database-screen, #manual-dni-screen {
+        #scanner-container, #database-screen, #employees-screen, #manual-dni-screen {
             display: none;
             margin-top: 15px;
         }
@@ -298,7 +301,6 @@
 <body data-theme="light">
 
     <div class="container">
-        <!-- Encabezado con Logo, Títulos y Configuración -->
         <div class="header-box">
             <img src="icono.png" alt="Logo" class="company-logo">
             <div class="header-titles">
@@ -308,13 +310,12 @@
             <button class="settings-btn" onclick="abrirConfiguracion()" title="Configuración">⚙️</button>
         </div>
         
-        <!-- Pantalla Principal -->
         <div id="home-screen">
             <button class="btn" onclick="iniciarEscanner()">⚡ Iniciar control de asistencia</button>
             <button class="btn btn-dni-mode" onclick="mostrarPantallaDni()">🆔 Registrar con DNI</button>
             <button class="btn btn-database" onclick="mostrarBaseDatos()">📊 Ver base todas las asistencias</button>
+            <button class="btn btn-employees" onclick="mostrarEmpleados()">👥 Ver lista de empleados</button>
 
-            <!-- Historial Rápido -->
             <div class="history-container">
                 <div class="history-title">
                     ⏱️ Últimos Escaneos
@@ -323,13 +324,11 @@
             </div>
         </div>
 
-        <!-- Pantalla del Escáner -->
         <div id="scanner-container">
             <video id="video" muted playsinline></video>
             <button class="btn btn-secondary" onclick="detenerEscanner()">Cerrar Cámara</button>
         </div>
 
-        <!-- Pantalla de Registro Manual por DNI -->
         <div id="manual-dni-screen">
             <p style="font-weight: bold; margin-bottom: 10px;">Ingrese el DNI del empleado:</p>
             <input type="tel" id="inputDniManual" class="dni-input" placeholder="Ej. 76907675" maxlength="12">
@@ -337,7 +336,6 @@
             <button class="btn btn-secondary" onclick="ocultarPantallaDni()">Volver al Inicio</button>
         </div>
 
-        <!-- Pantalla de la Base de Datos -->
         <div id="database-screen">
             <p style="color: #dc3545; font-weight: bold; font-size: 15px; margin-bottom: 10px;">
                 Recarga la página para ver los últimos registros
@@ -349,15 +347,19 @@
             </div>
             <button class="btn btn-secondary" onclick="ocultarBaseDatos()">Volver al Inicio</button>
         </div>
+
+        <div id="employees-screen">
+            <div class="iframe-wrapper">
+                <iframe src="https://docs.google.com/spreadsheets/d/18MHyH8JnecfC4i4ih0PRfffTR0DkRQWdKxaky9ziUw0/htmlembed?gid=1678483593&widget=false&chrome=false" title="Lista de Empleados"></iframe>
+            </div>
+            <button class="btn btn-secondary" onclick="ocultarEmpleados()">Volver al Inicio</button>
+        </div>
         
-        <!-- Cuadro de Alertas -->
         <div id="alertBox" class="alert"></div>
 
-        <!-- Iframe oculto (Pilar EURECA) -->
         <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;"></iframe>
     </div>
 
-    <!-- Modal de Configuración -->
     <div id="settingsModal" class="modal">
         <div class="modal-content">
             <h3>⚙️ Configuración</h3>
@@ -368,7 +370,6 @@
     </div>
 
     <script>
-        // Bloqueo estricto de doble toque para hacer zoom en navegadores web móviles
         let ultimoToque = 0;
         document.addEventListener('touchend', function (event) {
             let tiempoActual = new Date().getTime();
@@ -543,6 +544,17 @@
 
         function ocultarBaseDatos() {
             document.getElementById("database-screen").style.display = "none";
+            document.getElementById("home-screen").style.display = "block";
+        }
+
+        /* --- Funciones para la Pantalla de Empleados --- */
+        function mostrarEmpleados() {
+            document.getElementById("home-screen").style.display = "none";
+            document.getElementById("employees-screen").style.display = "block";
+        }
+
+        function ocultarEmpleados() {
+            document.getElementById("employees-screen").style.display = "none";
             document.getElementById("home-screen").style.display = "block";
         }
 
