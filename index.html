@@ -2,14 +2,12 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Control de Asistencia - Consorcio Vial Baas</title>
     
-    <!-- Configuración del ícono para dispositivos móviles -->
     <link rel="apple-touch-icon" href="icono.png">
     <link rel="icon" type="image/png" href="icono.png">
 
-    <!-- Librería ZXing para lectura ultrarrápida de QR -->
     <script type="text/javascript" src="https://unpkg.com/@zxing/library@latest"></script>
     <style>
         :root {
@@ -43,6 +41,8 @@
             align-items: center;
             min-height: 90vh;
             transition: background 0.3s ease, color 0.3s ease;
+            /* Bloquear gestos de zoom a nivel de cuerpo */
+            touch-action: pan-x pan-y;
         }
         .container {
             max-width: 480px;
@@ -80,7 +80,7 @@
             text-align: center;
             width: 100%;
             padding-left: 50px;
-            padding-right: 40px; /* Espacio para el engranaje */
+            padding-right: 40px;
         }
         .company-title {
             font-size: 16px;
@@ -295,7 +295,6 @@
 <body data-theme="light">
 
     <div class="container">
-        <!-- Encabezado con Logo, Títulos y Configuración -->
         <div class="header-box">
             <img src="icono.png" alt="Logo" class="company-logo">
             <div class="header-titles">
@@ -305,13 +304,11 @@
             <button class="settings-btn" onclick="abrirConfiguracion()" title="Configuración">⚙️</button>
         </div>
         
-        <!-- Pantalla Principal -->
         <div id="home-screen">
             <button class="btn" onclick="iniciarEscanner()">⚡ Iniciar control de asistencia</button>
             <button class="btn btn-dni-mode" onclick="mostrarPantallaDni()">🆔 Registrar con DNI</button>
             <button class="btn btn-database" onclick="mostrarBaseDatos()">📊 Ver base todas las asistencias</button>
 
-            <!-- Historial Rápido (Sin botón Borrar) -->
             <div class="history-container">
                 <div class="history-title">
                     ⏱️ Últimos Escaneos
@@ -320,13 +317,11 @@
             </div>
         </div>
 
-        <!-- Pantalla del Escáner -->
         <div id="scanner-container">
             <video id="video" muted playsinline></video>
             <button class="btn btn-secondary" onclick="detenerEscanner()">Cerrar Cámara</button>
         </div>
 
-        <!-- Pantalla de Registro Manual por DNI -->
         <div id="manual-dni-screen">
             <p style="font-weight: bold; margin-bottom: 10px;">Ingrese el DNI del empleado:</p>
             <input type="tel" id="inputDniManual" class="dni-input" placeholder="Ej. 76907675" maxlength="12">
@@ -334,7 +329,6 @@
             <button class="btn btn-secondary" onclick="ocultarPantallaDni()">Volver al Inicio</button>
         </div>
 
-        <!-- Pantalla de la Base de Datos -->
         <div id="database-screen">
             <p style="color: #dc3545; font-weight: bold; font-size: 15px; margin-bottom: 10px;">
                 Recarga la página para ver los últimos registros
@@ -347,18 +341,15 @@
             <button class="btn btn-secondary" onclick="ocultarBaseDatos()">Volver al Inicio</button>
         </div>
         
-        <!-- Cuadro de Alertas -->
         <div id="alertBox" class="alert"></div>
 
-        <!-- Iframe oculto (Pilar EURECA) -->
         <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;"></iframe>
     </div>
 
-    <!-- Modal de Configuración -->
     <div id="settingsModal" class="modal">
         <div class="modal-content">
             <h3>⚙️ Configuración</h3>
-            <button class="modal-btn" onclick="alternarModoOscuro()">🌙 Cambiar Modo Oscuro</button>
+            <button class="modal-btn" id="btnThemeToggle" onclick="alternarModoOscuro()">🌙 Cambiar a Modo Oscuro</button>
             <button class="modal-btn" onclick="verInfoApp()">ℹ️ Info de la app</button>
             <button class="modal-btn" style="background-color: #dc3545; color: white;" onclick="cerrarConfiguracion()">Cerrar</button>
         </div>
@@ -376,9 +367,10 @@
             cargarHistorial();
             descargarListaEmpleados(); 
             
-            // Cargar preferencia de Modo Oscuro guardada
+            // Cargar preferencia de Modo Oscuro guardada y actualizar texto del botón
             const savedTheme = localStorage.getItem('theme_mode') || 'light';
             document.body.setAttribute('data-theme', savedTheme);
+            actualizarTextoBotonTema(savedTheme);
         };
 
         function descargarListaEmpleados() {
@@ -427,7 +419,6 @@
 
         function procesarAsistencia(dniLimpio) {
             const tiempoActual = Date.now();
-            // Si no está en empleados, muestra el número de DNI tal cual
             const nombreMostrar = empleadosMap[dniLimpio] || dniLimpio;
 
             if (ultimosEscaneos[dniLimpio] && (tiempoActual - ultimosEscaneos[dniLimpio]) < 30000) {
@@ -544,11 +535,21 @@
             document.getElementById("settingsModal").style.display = "none";
         }
 
+        function actualizarTextoBotonTema(theme) {
+            const btn = document.getElementById("btnThemeToggle");
+            if (theme === 'dark') {
+                btn.innerText = "☀️ Cambiar a Modo Claro";
+            } else {
+                btn.innerText = "🌙 Cambiar a Modo Oscuro";
+            }
+        }
+
         function alternarModoOscuro() {
             const currentTheme = document.body.getAttribute('data-theme');
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
             document.body.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme_mode', newTheme);
+            actualizarTextoBotonTema(newTheme);
         }
 
         function verInfoApp() {
