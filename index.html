@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Asistencia QR Rápido</title>
-    <!-- Librería para escanear QR -->
+    <title>Control de Asistencia QR</title>
+    <!-- Librería para escanear QR mediante la cámara -->
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
         body {
@@ -22,46 +22,55 @@
             max-width: 450px;
             width: 100%;
             background: white;
-            padding: 25px;
+            padding: 30px;
             border-radius: 16px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             text-align: center;
         }
-        h2 { color: #333; margin-bottom: 5px; }
-        p { color: #666; font-size: 14px; margin-bottom: 20px; }
+        h2 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        p {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 25px;
+        }
         .btn {
-            background-color: #28a745;
+            background-color: #007bff;
             color: white;
             border: none;
-            padding: 16px 24px;
-            font-size: 18px;
+            padding: 14px 24px;
+            font-size: 16px;
             font-weight: bold;
             border-radius: 8px;
             cursor: pointer;
             width: 100%;
-            transition: background 0.2s ease;
+            transition: background 0.3s ease;
         }
-        .btn:hover { background-color: #218838; }
+        .btn:hover {
+            background-color: #0056b3;
+        }
         .btn-secondary {
-            background-color: #dc3545;
+            background-color: #6c757d;
             margin-top: 15px;
-            padding: 12px;
-            font-size: 16px;
         }
-        .btn-secondary:hover { background-color: #c82333; }
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
         #scanner-container {
             display: none;
-            margin-top: 15px;
+            margin-top: 20px;
         }
         #reader {
             width: 100%;
             border-radius: 8px;
             overflow: hidden;
-            border: 2px solid #28a745;
+            border: 2px dashed #007bff;
         }
         .alert {
-            margin-top: 15px;
-            padding: 12px;
+            margin-top: 20px;
+            padding: 15px;
             border-radius: 8px;
             display: none;
             font-weight: bold;
@@ -69,30 +78,32 @@
             white-space: pre-line;
         }
         .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
     </style>
 </head>
 <body>
 
     <div class="container">
         <h2>Control de Asistencia</h2>
-        <p>Modo Ultrarrápido (Lectura Instantánea)</p>
+        <p>Sistema de registro mediante código QR de fotochecks</p>
         
-        <!-- Pantalla de Inicio -->
+        <!-- Pantalla de Inicio / Menú Principal -->
         <div id="home-screen">
-            <button class="btn" onclick="iniciarEscanner()">⚡ Iniciar Escáner</button>
+            <button class="btn" onclick="iniciarEscanner()">📸 Tomar Asistencia</button>
         </div>
 
-        <!-- Pantalla del Escáner -->
+        <!-- Pantalla del Escáner (Oculta al inicio) -->
         <div id="scanner-container">
             <div id="reader"></div>
             <button class="btn btn-secondary" onclick="detenerEscanner()">Cerrar Cámara</button>
         </div>
         
-        <!-- Cuadro de Alertas -->
+        <!-- Cuadro de Alertas y Resultados -->
         <div id="alertBox" class="alert"></div>
     </div>
 
     <script>
+        // Tu URL exacta generada en Google Apps Script
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzNHnUUBS1w2grFTCdTFYbV-IFeHfDWk4TlOCx4z6Z-Uy-8kLcMluZkyivBY_9zUH9C/exec";
 
         let html5QrCode = null;
@@ -107,20 +118,16 @@
                 html5QrCode = new Html5Qrcode("reader");
             }
 
-            // CONFIGURACIÓN OPTIMIZADA PARA MÁXIMA VELOCIDAD
-            const config = {
-                fps: 30, // Subimos a 30 fotogramas por segundo para lectura fluida instantánea
-                qrbox: { width: 220, height: 220 },
-                aspectRatio: 1.0
-            };
-
             html5QrCode.start(
-                { facingMode: "environment" }, 
-                config,
+                { facingMode: "environment" }, // Cámara trasera del celular
+                {
+                    fps: 10,
+                    qrbox: { width: 250, height: 250 }
+                },
                 onScanSuccess
             ).catch(err => {
                 console.error("No se pudo iniciar la cámara", err);
-                showAlert("Error al acceder a la cámara.", "error");
+                showAlert("No se pudo acceder a la cámara. Revisa los permisos del navegador.", "error");
                 detenerEscanner();
             });
         }
@@ -131,7 +138,9 @@
                     document.getElementById("scanner-container").style.display = "none";
                     document.getElementById("home-screen").style.display = "block";
                     hideAlert();
-                }).catch(err => console.error(err));
+                }).catch(err => {
+                    console.error("Error al detener el escáner.", err);
+                });
             } else {
                 document.getElementById("scanner-container").style.display = "none";
                 document.getElementById("home-screen").style.display = "block";
@@ -143,34 +152,31 @@
             if (!scanningEnabled) return;
             scanningEnabled = false;
 
+            showAlert("Procesando asistencia...", "success");
+
             const dniLimpio = decodedText.trim();
-            showAlert(`⚡ ¡Detectado! DNI: ${dniLimpio}`, "success");
 
-            // Envío ultrarrápido por GET (Asíncrono en segundo plano sin congelar la app)
-            const urlFinal = `${WEB_APP_URL}?dni=${encodeURIComponent(dniLimpio)}`;
-
-            fetch(urlFinal)
-            .then(response => response.json())
-            .then(data => {
-                if(data.result === "success") {
-                    showAlert(`✅ Registrado: ${data.nombre}`, "success");
-                } else {
-                    showAlert(`⚠️ Registrado (DNI: ${dniLimpio})`, "success");
-                }
-                
-                // Reducido a 1.2 segundos para permitir marcar rápido al siguiente empleado
-                setTimeout(() => {
-                    scanningEnabled = true;
-                    hideAlert();
-                }, 1200);
+            fetch(WEB_APP_URL, {
+                method: "POST",
+                mode: "no-cors",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ dni: dniLimpio })
             })
-            .catch(() => {
-                // Incluso si falla la respuesta visual, el registro ya viajó a Google Sheets
-                showAlert(`✅ Asistencia enviada: ${dniLimpio}`, "success");
+            .then(() => {
+                showAlert(`¡Asistencia Registrada con Éxito!\nDNI: ${dniLimpio}`, "success");
+                
+                // Detiene la cámara automáticamente tras una marcación exitosa y vuelve al menú en 3.5 segundos
                 setTimeout(() => {
+                    detenerEscanner();
                     scanningEnabled = true;
-                    hideAlert();
-                }, 1200);
+                }, 3500);
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                showAlert("Error al registrar la asistencia. Intente nuevamente.", "error");
+                scanningEnabled = true;
             });
         }
 
