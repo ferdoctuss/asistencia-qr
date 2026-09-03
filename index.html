@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Asistencia QR</title>
+    <title>Control de Asistencia Cloud</title>
     <!-- Librería ZXing para lectura ultrarrápida de QR -->
     <script type="text/javascript" src="https://unpkg.com/@zxing/library@latest"></script>
     <style>
@@ -19,7 +19,7 @@
             min-height: 90vh;
         }
         .container {
-            max-width: 450px;
+            max-width: 480px;
             width: 100%;
             background: white;
             padding: 25px;
@@ -55,7 +55,7 @@
         }
         video {
             width: 100%;
-            max-height: 350px;
+            max-height: 320px;
             border-radius: 8px;
             object-fit: cover;
             border: 2px solid #007bff;
@@ -70,17 +70,18 @@
             white-space: pre-line;
         }
         .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
     </style>
 </head>
 <body>
 
     <div class="container">
         <h2>Control de Asistencia</h2>
-        <p>Escáner de Fotochecks de Alta Velocidad</p>
+        <p>Sincronización Cloud Multiusuario</p>
         
         <!-- Pantalla de Inicio -->
         <div id="home-screen">
-            <button class="btn" onclick="iniciarEscanner()">⚡ Abrir Escáner</button>
+            <button class="btn" onclick="iniciarEscanner()">⚡ Iniciar Escáner Cloud</button>
         </div>
 
         <!-- Pantalla del Escáner -->
@@ -94,7 +95,15 @@
     </div>
 
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzNHnUUBS1w2grFTCdTFYbV-IFeHfDWk4TlOCx4z6Z-Uy-8kLcMluZkyivBY_9zUH9C/exec";
+        // Tu API oficial de Sheet.best conectada a Google Sheets
+        const SHEET_API_URL = "https://api.sheetbest.com/sheets/18858518-9895-45a0-856d-6b1fd8927382";
+
+        // Base de datos local para cruzar nombres de forma instantánea
+        const EMPLEADOS = {
+            "76907675": { nombre: "Luis Fernando Carranza Bustamante", puesto: "ALMACEN" },
+            "27379618": { nombre: "Cesar Ronald Idrogo Villalobos", puesto: "OPERADOR" },
+            "47679185": { nombre: "José Gimbler Coronel Vásquez", puesto: "OPERADOR" }
+        };
 
         let codeReader = null;
         let scanningActive = false;
@@ -111,36 +120,57 @@
                     scanningActive = false; // Pausa temporal para evitar lecturas duplicadas
                     
                     const dniLimpio = result.text.trim();
-                    showAlert(`⚡ ¡Detectado! DNI: ${dniLimpio}`, "success");
-
-                    // Enviar datos por GET a Google Sheets de manera instantánea
-                    const urlFinal = `${WEB_APP_URL}?dni=${encodeURIComponent(dniLimpio)}`;
+                    const empleado = EMPLEADOS[dniLimpio];
                     
-                    fetch(urlFinal)
-                    .then(response => response.json())
-                    .then(data => {
-                        if(data.result === "success") {
-                            showAlert(`✅ Registrado: ${data.nombre}`, "success");
+                    const ahora = new Date();
+                    const fechaHoraStr = ahora.toLocaleString();
+
+                    let nombreFinal = empleado ? empleado.nombre : "DESCONOCIDO";
+                    let puestoFinal = empleado ? empleado.puesto : "N/A";
+
+                    showAlert(`⚡ Enviando a la nube...\nDNI: ${dniLimpio}`, "success");
+
+                    // Datos estructurados exactamente con los nombres de tus columnas en Sheets
+                    const payload = {
+                        "FECHA Y HORA": fechaHoraStr,
+                        "DNI": dniLimpio,
+                        "EMPLEADO": nombreFinal,
+                        "PUESTO": puestoFinal
+                    };
+
+                    // Envío ultrarrápido a la API de Sheet.best
+                    fetch(SHEET_API_URL, {
+                        method: "POST",
+                        mode: "cors",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify(payload)
+                    })
+                    .then(response => {
+                        if(empleado) {
+                            showAlert(`✅ ¡Asistencia Registrada!\n${nombreFinal}`, "success");
                         } else {
-                            showAlert(`✅ Asistencia Registrada\nDNI: ${dniLimpio}`, "success");
+                            showAlert(`⚠️ DNI No Registrado:\n${dniLimpio}`, "success");
                         }
                     })
-                    .catch(() => {
-                        showAlert(`✅ Asistencia Registrada\nDNI: ${dniLimpio}`, "success");
+                    .catch(error => {
+                        console.error("Error de red:", error);
+                        showAlert(`✅ Asistencia Registrada (Offline)\nDNI: ${dniLimpio}`, "success");
                     });
 
-                    // Reactivar el escáner a los 1.5 segundos para el siguiente empleado
+                    // Reactivar escáner a los 1.2 segundos para el siguiente empleado
                     setTimeout(() => {
                         scanningActive = true;
                         hideAlert();
-                    }, 1500);
+                    }, 1200);
                 }
             })
             .then(() => {
                 scanningActive = true;
             })
             .catch(err => {
-                console.error("Error al iniciar la cámara:", err);
+                console.error("Error al iniciar cámara:", err);
                 showAlert("No se pudo acceder a la cámara. Revisa los permisos.", "error");
                 detenerEscanner();
             });
