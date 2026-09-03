@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Control de Asistencia QR</title>
-    <!-- Librería para escanear QR mediante la cámara -->
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <!-- Librería ZXing para lectura ultrarrápida de QR -->
+    <script type="text/javascript" src="https://unpkg.com/@zxing/library@latest"></script>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -22,55 +22,47 @@
             max-width: 450px;
             width: 100%;
             background: white;
-            padding: 30px;
+            padding: 25px;
             border-radius: 16px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             text-align: center;
         }
-        h2 {
-            color: #333;
-            margin-bottom: 10px;
-        }
-        p {
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 25px;
-        }
+        h2 { color: #333; margin-bottom: 5px; }
+        p { color: #666; font-size: 14px; margin-bottom: 20px; }
         .btn {
             background-color: #007bff;
             color: white;
             border: none;
-            padding: 14px 24px;
-            font-size: 16px;
+            padding: 16px 24px;
+            font-size: 18px;
             font-weight: bold;
             border-radius: 8px;
             cursor: pointer;
             width: 100%;
-            transition: background 0.3s ease;
+            transition: background 0.2s ease;
         }
-        .btn:hover {
-            background-color: #0056b3;
-        }
+        .btn:hover { background-color: #0056b3; }
         .btn-secondary {
-            background-color: #6c757d;
+            background-color: #dc3545;
             margin-top: 15px;
+            padding: 12px;
+            font-size: 16px;
         }
-        .btn-secondary:hover {
-            background-color: #5a6268;
-        }
+        .btn-secondary:hover { background-color: #c82333; }
         #scanner-container {
             display: none;
-            margin-top: 20px;
+            margin-top: 15px;
         }
-        #reader {
+        video {
             width: 100%;
+            max-height: 350px;
             border-radius: 8px;
-            overflow: hidden;
-            border: 2px dashed #007bff;
+            object-fit: cover;
+            border: 2px solid #007bff;
         }
         .alert {
-            margin-top: 20px;
-            padding: 15px;
+            margin-top: 15px;
+            padding: 12px;
             border-radius: 8px;
             display: none;
             font-weight: bold;
@@ -78,106 +70,90 @@
             white-space: pre-line;
         }
         .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
     </style>
 </head>
 <body>
 
     <div class="container">
         <h2>Control de Asistencia</h2>
-        <p>Sistema de registro mediante código QR de fotochecks</p>
+        <p>Escáner de Fotochecks de Alta Velocidad</p>
         
-        <!-- Pantalla de Inicio / Menú Principal -->
+        <!-- Pantalla de Inicio -->
         <div id="home-screen">
-            <button class="btn" onclick="iniciarEscanner()">📸 Tomar Asistencia</button>
+            <button class="btn" onclick="iniciarEscanner()">⚡ Abrir Escáner</button>
         </div>
 
-        <!-- Pantalla del Escáner (Oculta al inicio) -->
+        <!-- Pantalla del Escáner -->
         <div id="scanner-container">
-            <div id="reader"></div>
+            <video id="video" muted playsinline></video>
             <button class="btn btn-secondary" onclick="detenerEscanner()">Cerrar Cámara</button>
         </div>
         
-        <!-- Cuadro de Alertas y Resultados -->
+        <!-- Cuadro de Alertas -->
         <div id="alertBox" class="alert"></div>
     </div>
 
     <script>
-        // Tu URL exacta generada en Google Apps Script
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzNHnUUBS1w2grFTCdTFYbV-IFeHfDWk4TlOCx4z6Z-Uy-8kLcMluZkyivBY_9zUH9C/exec";
 
-        let html5QrCode = null;
-        let scanningEnabled = true;
+        let codeReader = null;
+        let scanningActive = false;
 
         function iniciarEscanner() {
             document.getElementById("home-screen").style.display = "none";
             document.getElementById("scanner-container").style.display = "block";
             hideAlert();
 
-            if (!html5QrCode) {
-                html5QrCode = new Html5Qrcode("reader");
-            }
+            codeReader = new ZXing.BrowserQRCodeReader();
 
-            html5QrCode.start(
-                { facingMode: "environment" }, // Cámara trasera del celular
-                {
-                    fps: 10,
-                    qrbox: { width: 250, height: 250 }
-                },
-                onScanSuccess
-            ).catch(err => {
-                console.error("No se pudo iniciar la cámara", err);
-                showAlert("No se pudo acceder a la cámara. Revisa los permisos del navegador.", "error");
+            codeReader.decodeFromVideoDevice(undefined, 'video', (result, err) => {
+                if (result && scanningActive) {
+                    scanningActive = false; // Pausa temporal para evitar lecturas duplicadas
+                    
+                    const dniLimpio = result.text.trim();
+                    showAlert(`⚡ ¡Detectado! DNI: ${dniLimpio}`, "success");
+
+                    // Enviar datos por GET a Google Sheets de manera instantánea
+                    const urlFinal = `${WEB_APP_URL}?dni=${encodeURIComponent(dniLimpio)}`;
+                    
+                    fetch(urlFinal)
+                    .then(response => response.json())
+                    .then(data => {
+                        if(data.result === "success") {
+                            showAlert(`✅ Registrado: ${data.nombre}`, "success");
+                        } else {
+                            showAlert(`✅ Asistencia Registrada\nDNI: ${dniLimpio}`, "success");
+                        }
+                    })
+                    .catch(() => {
+                        showAlert(`✅ Asistencia Registrada\nDNI: ${dniLimpio}`, "success");
+                    });
+
+                    // Reactivar el escáner a los 1.5 segundos para el siguiente empleado
+                    setTimeout(() => {
+                        scanningActive = true;
+                        hideAlert();
+                    }, 1500);
+                }
+            })
+            .then(() => {
+                scanningActive = true;
+            })
+            .catch(err => {
+                console.error("Error al iniciar la cámara:", err);
+                showAlert("No se pudo acceder a la cámara. Revisa los permisos.", "error");
                 detenerEscanner();
             });
         }
 
         function detenerEscanner() {
-            if (html5QrCode && html5QrCode.isScanning) {
-                html5QrCode.stop().then(() => {
-                    document.getElementById("scanner-container").style.display = "none";
-                    document.getElementById("home-screen").style.display = "block";
-                    hideAlert();
-                }).catch(err => {
-                    console.error("Error al detener el escáner.", err);
-                });
-            } else {
-                document.getElementById("scanner-container").style.display = "none";
-                document.getElementById("home-screen").style.display = "block";
-                hideAlert();
+            scanningActive = false;
+            if (codeReader) {
+                codeReader.reset();
             }
-        }
-
-        function onScanSuccess(decodedText, decodedResult) {
-            if (!scanningEnabled) return;
-            scanningEnabled = false;
-
-            showAlert("Procesando asistencia...", "success");
-
-            const dniLimpio = decodedText.trim();
-
-            fetch(WEB_APP_URL, {
-                method: "POST",
-                mode: "no-cors",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ dni: dniLimpio })
-            })
-            .then(() => {
-                showAlert(`¡Asistencia Registrada con Éxito!\nDNI: ${dniLimpio}`, "success");
-                
-                // Detiene la cámara automáticamente tras una marcación exitosa y vuelve al menú en 3.5 segundos
-                setTimeout(() => {
-                    detenerEscanner();
-                    scanningEnabled = true;
-                }, 3500);
-            })
-            .catch(error => {
-                console.error("Error:", error);
-                showAlert("Error al registrar la asistencia. Intente nuevamente.", "error");
-                scanningEnabled = true;
-            });
+            document.getElementById("scanner-container").style.display = "none";
+            document.getElementById("home-screen").style.display = "block";
+            hideAlert();
         }
 
         function showAlert(message, type) {
