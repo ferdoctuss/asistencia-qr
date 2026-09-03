@@ -2,270 +2,117 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Atrapa la Manzana - Juego Web</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Asistencia QR</title>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            user-select: none;
-        }
         body {
-            background: linear-gradient(135deg, #1e3c72, #2a5298);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: Arial, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            height: 100vh;
-            overflow: hidden;
-            color: #fff;
         }
-        
-        /* Botón de recarga provisional para iPhone */
-        #reload-btn {
-            position: fixed;
-            top: 15px;
-            right: 15px;
-            background: rgba(255, 255, 255, 0.2);
-            border: 2px solid #fff;
-            color: #fff;
-            padding: 8px 12px;
-            font-size: 0.9rem;
-            font-weight: bold;
-            border-radius: 20px;
-            cursor: pointer;
-            z-index: 1000;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            backdrop-filter: blur(5px);
-        }
-        #reload-btn:active {
-            background: rgba(255, 255, 255, 0.4);
-            transform: scale(0.95);
-        }
-
-        h1 {
-            margin-bottom: 10px;
-            font-size: 1.8rem;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-        }
-        #game-container {
-            position: relative;
-            width: 380px;
-            height: 550px;
-            background: rgba(0, 0, 0, 0.3);
-            border: 4px solid #fff;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-        }
-        #basket {
-            position: absolute;
-            bottom: 20px;
-            left: 140px;
-            width: 100px;
-            height: 25px;
-            background: #ffcc00;
-            border-radius: 10px;
-            border: 2px solid #e6b800;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-        }
-        .apple {
-            position: absolute;
-            top: -30px;
-            width: 30px;
-            height: 30px;
-            background: #ff4d4d;
-            border-radius: 50%;
-            border: 2px solid #cc0000;
-            box-shadow: inset -3px -3px 0px rgba(0,0,0,0.2);
-        }
-        .apple::before {
-            content: '';
-            position: absolute;
-            top: -6px;
-            left: 12px;
-            width: 4px;
-            height: 8px;
-            background: #8b4513;
-            border-radius: 2px;
-        }
-        #scoreboard {
-            display: flex;
-            justify-content: space-between;
-            width: 380px;
-            margin-bottom: 10px;
-            font-size: 1.1rem;
-            font-weight: bold;
-        }
-        #start-screen {
-            position: absolute;
-            top: 0;
-            left: 0;
+        .container {
+            max-width: 500px;
             width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.85);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 10;
-        }
-        .main-btn {
-            padding: 12px 25px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: #fff;
-            background: #28a745;
-            border: none;
-            border-radius: 25px;
-            cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            transition: background 0.2s, transform 0.1s;
-        }
-        .main-btn:active {
-            transform: scale(0.95);
-        }
-        #instructions {
-            margin-top: 15px;
-            font-size: 0.85rem;
-            color: #ddd;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             text-align: center;
-            padding: 0 20px;
         }
+        #reader {
+            width: 100%;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .alert {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 6px;
+            display: none;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
     </style>
 </head>
 <body>
 
-    <button id="reload-btn" onclick="location.reload();">🔄 Recargar</button>
-
-    <h1>Atrapa la Manzana</h1>
-    
-    <div id="scoreboard">
-        <span id="score-text">Puntuación: 0</span>
-        <span id="lives-text">Vidas: 3</span>
-    </div>
-
-    <div id="game-container">
-        <div id="basket"></div>
+    <div class="container">
+        <h2>Control de Asistencia</h2>
+        <p>Escanea el fotocheck (DNI del empleado)</p>
         
-        <div id="start-screen">
-            <h2 id="game-title" style="margin-bottom: 20px; text-align: center;">¡Listos para jugar!</h2>
-            <button class="main-btn" id="start-btn" onclick="startGame()">Iniciar Juego</button>
-            <div id="instructions">
-                Desliza el dedo dentro del recuadro para mover la canasta. ¡No dejes caer las manzanas!
-            </div>
-        </div>
+        <div id="reader"></div>
+        
+        <div id="alertBox" class="alert"></div>
     </div>
 
     <script>
-        const gameContainer = document.getElementById('game-container');
-        const basket = document.getElementById('basket');
-        const scoreText = document.getElementById('score-text');
-        const livesText = document.getElementById('lives-text');
-        const startScreen = document.getElementById('start-screen');
-        const startBtn = document.getElementById('start-btn');
-        const gameTitle = document.getElementById('game-title');
+        // Pega aquí tu URL de Google Apps Script
+        const WEB_APP_URL = "PEGAR_AQUI_TU_URL_DE_APPS_SCRIPT";
 
-        let score = 0;
-        let lives = 3;
-        let gameInterval;
-        let appleInterval;
-        let apples = [];
-        let basketX = 140;
-        let isPlaying = false;
+        let scanningEnabled = true;
 
-        // Control táctil optimizado para iPhone dentro del contenedor
-        gameContainer.addEventListener('touchmove', (e) => {
-            e.preventDefault(); // Evita el scroll indeseado de la página al jugar
-            let touchX = e.touches[0].clientX - gameContainer.getBoundingClientRect().left;
-            basketX = touchX - 50;
-            if (basketX < 0) basketX = 0;
-            if (basketX > 280) basketX = 280; // Ancho contenedor (380) - Ancho canasta (100)
-            basket.style.left = basketX + 'px';
-        }, { passive: false });
+        function onScanSuccess(decodedText, decodedResult) {
+            if (!scanningEnabled) return;
+            scanningEnabled = false;
 
-        // Control opcional con el mouse para pruebas en PC
-        gameContainer.addEventListener('mousemove', (e) => {
-            let mouseX = e.clientX - gameContainer.getBoundingClientRect().left;
-            basketX = mouseX - 50;
-            if (basketX < 0) basketX = 0;
-            if (basketX > 280) basketX = 280;
-            basket.style.left = basketX + 'px';
+            showAlert("Registrando asistencia...", "success");
+
+            // Limpiamos el texto por si el QR trae espacios
+            const dniLimpio = decodedText.trim();
+
+            fetch(WEB_APP_URL, {
+                method: "POST",
+                mode: "no-cors",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ dni: dniLimpio })
+            })
+            .then(() => {
+                showAlert(`¡Asistencia registrada!\nDNI: ${dniLimpio}`, "success");
+                
+                setTimeout(() => {
+                    scanningEnabled = true;
+                    hideAlert();
+                }, 3500);
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                showAlert("Error al registrar. Intente nuevamente.", "error");
+                scanningEnabled = true;
+            });
+        }
+
+        function showAlert(message, type) {
+            const alertBox = document.getElementById("alertBox");
+            alertBox.innerText = message;
+            alertBox.className = `alert ${type}`;
+            alertBox.style.display = "block";
+        }
+
+        function hideAlert() {
+            document.getElementById("alertBox").style.display = "none";
+        }
+
+        const html5QrCode = new Html5Qrcode("reader");
+        html5QrCode.start(
+            { facingMode: "environment" },
+            {
+                fps: 10,
+                qrbox: { width: 250, height: 250 }
+            },
+            onScanSuccess
+        ).catch(err => {
+            console.error("No se pudo iniciar la cámara", err);
+            showAlert("No se pudo acceder a la cámara. Revisa los permisos.", "error");
         });
-
-        function startGame() {
-            startScreen.style.display = 'none';
-            score = 0;
-            lives = 3;
-            updateUI();
-            
-            document.querySelectorAll('.apple').forEach(a => a.remove());
-            apples = [];
-
-            isPlaying = true;
-            gameInterval = setInterval(updateGame, 20);
-            appleInterval = setInterval(createApple, 900);
-        }
-
-        function createApple() {
-            if (!isPlaying) return;
-            const apple = document.createElement('div');
-            apple.classList.add('apple');
-            let posX = Math.random() * 350; // 380 - 30
-            apple.style.left = posX + 'px';
-            apple.style.top = '-30px';
-            
-            gameContainer.appendChild(apple);
-            apples.push({ element: apple, x: posX, y: -30, speed: 3.5 + Math.random() * 2.5 });
-        }
-
-        function updateGame() {
-            for (let i = apples.length - 1; i >= 0; i--) {
-                let a = apples[i];
-                a.y += a.speed;
-                a.element.style.top = a.y + 'px';
-
-                // Colisión con la canasta
-                if (
-                    a.y >= 485 && a.y <= 515 &&
-                    a.x + 30 >= basketX && a.x <= basketX + 100
-                ) {
-                    a.element.remove();
-                    apples.splice(i, 1);
-                    score += 10;
-                    updateUI();
-                } 
-                // Manzana caída al suelo
-                else if (a.y > 525) {
-                    a.element.remove();
-                    apples.splice(i, 1);
-                    lives--;
-                    updateUI();
-                    if (lives <= 0) {
-                        endGame();
-                    }
-                }
-            }
-        }
-
-        function updateUI() {
-            scoreText.innerText = `Puntuación: ${score}`;
-            livesText.innerText = `Vidas: ${lives}`;
-        }
-
-        function endGame() {
-            isPlaying = false;
-            clearInterval(gameInterval);
-            clearInterval(appleInterval);
-            
-            gameTitle.innerHTML = `¡Juego Terminado!<br><span style="font-size: 1.2rem;">Puntuación: ${score}</span>`;
-            startBtn.innerText = 'Jugar de Nuevo';
-            startScreen.style.display = 'flex';
-        }
     </script>
 </body>
 </html>
