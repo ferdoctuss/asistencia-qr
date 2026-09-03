@@ -117,10 +117,17 @@
             border-bottom: 1px solid #eee;
             display: flex;
             justify-content: space-between;
+            align-items: center;
+        }
+        .history-name {
+            font-weight: bold;
+            color: #222;
         }
         .history-time {
             color: #888;
             font-size: 12px;
+            white-space: nowrap;
+            margin-left: 10px;
         }
         .btn-clear {
             background: none;
@@ -175,7 +182,6 @@
 
         <!-- Pantalla de la Base de Datos en Google Sheets -->
         <div id="database-screen">
-            <!-- Subtítulo en Rojo y Botón de Recarga reubicados aquí -->
             <p style="color: #dc3545; font-weight: bold; font-size: 15px; margin-bottom: 10px;">
                 Recarga la página para ver los últimos registros
             </p>
@@ -190,19 +196,44 @@
         <!-- Cuadro de Alertas -->
         <div id="alertBox" class="alert"></div>
 
-        <!-- Iframe oculto para eludir bloqueos CORS (Pilar EURECA) -->
+        <!-- Iframe oculto (Pilar EURECA INTACTO) -->
         <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;"></iframe>
     </div>
 
     <script>
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxBiAQFpY8hz6bxEgOkKjXtehEgwzEtv-7TunbzO2P29YnwwBujOFgZwfSxnyJxyhhU/exec";
+        
+        // Diccionario local de empleados para mostrar nombres sin tocar EURECA
+        let empleadosMap = {};
 
         let codeReader = null;
         let scanningActive = false;
 
         window.onload = function() {
             cargarHistorial();
+            descargarListaEmpleados(); // Carga los nombres en segundo plano
         };
+
+        // Función que lee la pestaña EMPLEADOS directamente de forma segura
+        function descargarListaEmpleados() {
+            // URL de exportación CSV directa a tu pestaña EMPLEADOS (gid=1678483593)
+            const csvUrl = "https://docs.google.com/spreadsheets/export?format=csv&id=18MHyH8JnecfC4i4ih0PRfffTR0DkRQWdKxaky9ziUw0&gid=1678483593";
+            
+            fetch(csvUrl)
+                .then(response => response.text())
+                .then(data => {
+                    const lineas = data.split('\n');
+                    for(let i = 1; i < lineas.length; i++) {
+                        const columnas = lineas[i].split(',');
+                        if(columnas.length >= 2) {
+                            const dni = columnas[0].replace(/["\r]/g, '').trim();
+                            const nombre = columnas[1].replace(/["\r]/g, '').trim();
+                            if(dni) empleadosMap[dni] = nombre;
+                        }
+                    }
+                })
+                .catch(err => console.log("Se usará el DNI temporalmente (sin red/bloqueo)."));
+        }
 
         function iniciarEscanner() {
             document.getElementById("home-screen").style.display = "none";
@@ -216,10 +247,16 @@
                     scanningActive = false; 
                     
                     const dniLimpio = result.text.trim();
-                    showAlert(`⚡ Registrando DNI: ${dniLimpio}...`, "success");
+                    
+                    // Buscar el nombre en el diccionario, si no lo encuentra, usa el DNI temporalmente
+                    const nombreMostrar = empleadosMap[dniLimpio] || dniLimpio;
+                    
+                    showAlert(`⚡ Registrando: ${nombreMostrar}...`, "success");
 
-                    agregarAHistorial(dniLimpio);
+                    // Guardar en el historial visual usando el NOMBRE
+                    agregarAHistorial(dniLimpio, nombreMostrar);
 
+                    // Envío a Google Sheets (EURECA INTACTO)
                     const form = document.createElement("form");
                     form.method = "GET";
                     form.action = WEB_APP_URL;
@@ -236,7 +273,7 @@
                     document.body.removeChild(form);
 
                     setTimeout(() => {
-                        showAlert(`✅ ¡Asistencia Registrada!\nDNI: ${dniLimpio}`, "success");
+                        showAlert(`✅ ¡Asistencia Registrada!\n${nombreMostrar}`, "success");
                     }, 500);
 
                     setTimeout(() => {
@@ -265,7 +302,6 @@
             hideAlert();
         }
 
-        /* --- Funciones de Navegación de Pantallas --- */
         function mostrarBaseDatos() {
             document.getElementById("home-screen").style.display = "none";
             document.getElementById("database-screen").style.display = "block";
@@ -276,7 +312,7 @@
             document.getElementById("home-screen").style.display = "block";
         }
 
-        /* --- Funciones de Historial Local --- */
+        /* --- Funciones de Historial Local Actualizadas para Nombres --- */
         function cargarHistorial() {
             const historyList = document.getElementById('historyList');
             historyList.innerHTML = ''; 
@@ -291,17 +327,20 @@
             historial.forEach(item => {
                 const li = document.createElement('li');
                 li.className = 'history-item';
-                li.innerHTML = `<span>DNI: <b>${item.dni}</b></span> <span class="history-time">${item.hora}</span>`;
+                // Si el item tiene nombre guardado lo usa, si es antiguo usa el DNI
+                const textoMostrar = item.nombre || item.dni; 
+                li.innerHTML = `<span class="history-name">${textoMostrar}</span> <span class="history-time">${item.hora}</span>`;
                 historyList.appendChild(li);
             });
         }
 
-        function agregarAHistorial(dni) {
+        function agregarAHistorial(dni, nombre) {
             let historial = JSON.parse(localStorage.getItem('historial_qr_asistencia')) || [];
             const ahora = new Date();
             const horaStr = ahora.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
             
-            historial.unshift({ dni: dni, hora: horaStr }); 
+            // Guardamos tanto el DNI como el Nombre
+            historial.unshift({ dni: dni, nombre: nombre, hora: horaStr }); 
             if(historial.length > 15) historial.pop();
             
             localStorage.setItem('historial_qr_asistencia', JSON.stringify(historial));
