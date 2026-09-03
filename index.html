@@ -3,7 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Asistencia QR</title>
+    <title>Control de Asistencia - Consorcio Vial Baas</title>
+    
+    <!-- Configuración del ícono para iPhone (Apple Touch Icon) y Android -->
+    <link rel="apple-touch-icon" href="icono.png">
+    <link rel="icon" type="image/png" href="icono.png">
+
     <!-- Librería ZXing para lectura ultrarrápida de QR -->
     <script type="text/javascript" src="https://unpkg.com/@zxing/library@latest"></script>
     <style>
@@ -25,8 +30,49 @@
             border-radius: 16px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             text-align: center;
+            position: relative;
         }
-        h2 { color: #333; margin-bottom: 20px; }
+        
+        /* Estilos del Encabezado con Logo Corporativo */
+        .header-box {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            margin-bottom: 25px;
+            padding-top: 5px;
+        }
+        .company-logo {
+            position: absolute;
+            left: 0;
+            width: 48px;
+            height: 48px;
+            object-fit: contain;
+            border-radius: 8px;
+            background: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 2px;
+        }
+        .header-titles {
+            text-align: center;
+            width: 100%;
+            padding-left: 50px; /* Espacio para que el logo no pise el texto en pantallas chicas */
+            padding-right: 10px;
+        }
+        .company-title {
+            font-size: 16px;
+            font-weight: 800;
+            color: #1a365d;
+            margin: 0;
+            letter-spacing: 0.5px;
+        }
+        .app-subtitle {
+            font-size: 14px;
+            font-weight: 600;
+            color: #555;
+            margin: 4px 0 0 0;
+        }
+
         .btn {
             background-color: #007bff;
             color: white;
@@ -157,12 +203,19 @@
 <body>
 
     <div class="container">
-        <h2>Control de Asistencia</h2>
+        <!-- Encabezado con Logo y Títulos Profesionales -->
+        <div class="header-box">
+            <img src="icono.png" alt="Logo" class="company-logo">
+            <div class="header-titles">
+                <h1 class="company-title">CONSORCIO VIAL BAAS</h1>
+                <p class="app-subtitle">Control de asistencia</p>
+            </div>
+        </div>
         
         <!-- Pantalla Principal -->
         <div id="home-screen">
-            <button class="btn" onclick="iniciarEscanner()">⚡ Iniciar Escáner</button>
-            <button class="btn btn-database" onclick="mostrarBaseDatos()">📊 Ver Base de Datos</button>
+            <button class="btn" onclick="iniciarEscanner()">⚡ Iniciar control de asistencia</button>
+            <button class="btn btn-database" onclick="mostrarBaseDatos()">📊 Ver base todas las asistencias</button>
 
             <!-- Historial Rápido -->
             <div class="history-container">
@@ -206,8 +259,6 @@
         let empleadosMap = {};
         let codeReader = null;
         let scanningActive = false;
-        
-        // Memoria temporal para bloquear escaneos repetidos (30 segundos)
         let ultimosEscaneos = {}; 
 
         window.onload = function() {
@@ -233,13 +284,10 @@
                 .catch(err => console.log("Se usará el DNI temporalmente."));
         }
 
-        // Generar un sonido de "Bip" nativo sin archivos MP3 y hacer vibrar
         function emitirSonidoYVibracion() {
-            // Vibración (Soportado nativamente en Android y algunos navegadores iOS)
             if (navigator.vibrate) {
                 navigator.vibrate(150); 
             }
-            // Bip con la API de Audio
             try {
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
                 if (AudioContext) {
@@ -248,17 +296,17 @@
                     const gainNode = ctx.createGain();
                     
                     osc.type = 'sine';
-                    osc.frequency.setValueAtTime(880, ctx.currentTime); // Tono agudo
-                    gainNode.gain.setValueAtTime(0.1, ctx.currentTime); // Volumen suave
+                    osc.frequency.setValueAtTime(880, ctx.currentTime);
+                    gainNode.gain.setValueAtTime(0.1, ctx.currentTime);
                     
                     osc.connect(gainNode);
                     gainNode.connect(ctx.destination);
                     
                     osc.start();
-                    osc.stop(ctx.currentTime + 0.15); // Duración rápida
+                    osc.stop(ctx.currentTime + 0.15);
                 }
             } catch (e) {
-                console.log("Audio no soportado en este dispositivo");
+                console.log("Audio no soportado");
             }
         }
 
@@ -277,26 +325,22 @@
                     const tiempoActual = Date.now();
                     const nombreMostrar = empleadosMap[dniLimpio] || dniLimpio;
 
-                    // VALIDACIÓN DE 30 SEGUNDOS ANTISPAM
                     if (ultimosEscaneos[dniLimpio] && (tiempoActual - ultimosEscaneos[dniLimpio]) < 30000) {
-                        // Si pasaron menos de 30 segundos, muestra alerta roja y rechaza el envío
                         showAlert(`❌ ${nombreMostrar}\nYA FUE REGISTRADO`, "error");
                         
                         setTimeout(() => {
                             scanningActive = true;
                             hideAlert();
                         }, 2000);
-                        return; // Detiene la ejecución para no enviarlo a Google Sheets
+                        return;
                     }
 
-                    // Si pasó el filtro: Reproducir Bip, Guardar tiempo actual y Enviar
                     emitirSonidoYVibracion();
                     ultimosEscaneos[dniLimpio] = tiempoActual;
 
                     showAlert(`⚡ Registrando: ${nombreMostrar}...`, "success");
                     agregarAHistorial(dniLimpio, nombreMostrar);
 
-                    // Envío a Google Sheets (EURECA INTACTO)
                     const form = document.createElement("form");
                     form.method = "GET";
                     form.action = WEB_APP_URL;
@@ -352,7 +396,6 @@
             document.getElementById("home-screen").style.display = "block";
         }
 
-        /* --- Funciones de Historial Local --- */
         function cargarHistorial() {
             const historyList = document.getElementById('historyList');
             historyList.innerHTML = ''; 
