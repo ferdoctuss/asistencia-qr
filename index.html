@@ -86,6 +86,13 @@
             background-color: #004085;
         }
 
+        .error-msg {
+            color: var(--accent-color);
+            font-size: 13px;
+            margin-top: 10px;
+            display: none;
+        }
+
         /* --- VISTA SISTEMA / DASHBOARD --- */
         #app-container {
             display: none;
@@ -233,12 +240,12 @@
             <p style="margin-bottom: 20px; font-size: 14px; color: #666;">Ingrese sus credenciales de trabajador</p>
             <form id="loginForm">
                 <div class="form-group">
-                    <label>Correo Electrónico:</label>
-                    <input type="email" id="email" required placeholder="trabajador@santacelia.com">
+                    <label>Usuario o Correo:</label>
+                    <input type="text" id="userInput" required placeholder="Ej. FER o correo">
                 </div>
                 <div class="form-group">
                     <label>Contraseña:</label>
-                    <input type="password" id="password" required placeholder="********">
+                    <input type="password" id="passwordInput" required placeholder="********">
                 </div>
                 <div class="form-group">
                     <label>Especialidad / Área:</label>
@@ -250,6 +257,7 @@
                     </select>
                 </div>
                 <button type="submit" class="btn">Ingresar al Sistema</button>
+                <p id="loginError" class="error-msg">Usuario o contraseña incorrectos. (Prueba: FER / 1718)</p>
             </form>
         </div>
     </div>
@@ -380,27 +388,36 @@
     </div>
 
     <script>
-        // Lógica de inicio de sesión simulado
+        // Lógica de inicio de sesión con usuario de prueba (FER / 1718)
         const loginForm = document.getElementById('loginForm');
         const loginContainer = document.getElementById('login-container');
         const appContainer = document.getElementById('app-container');
         const userDisplay = document.getElementById('userDisplay');
+        const loginError = document.getElementById('loginError');
 
         loginForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            const email = document.getElementById('email').value;
+            const userInput = document.getElementById('userInput').value.trim().toUpperCase();
+            const passwordInput = document.getElementById('passwordInput').value.trim();
             const area = document.getElementById('area').value;
 
-            userDisplay.innerText = `${email} (${area.toUpperCase()})`;
+            // Validación del usuario FER y contraseña 1718 (o cualquier correo de prueba)
+            if ((userInput === 'FER' && passwordInput === '1718') || passwordInput === '1718') {
+                userDisplay.innerText = `${userInput} (${area.toUpperCase()})`;
+                loginError.style.display = 'none';
 
-            loginContainer.style.display = 'none';
-            appContainer.style.display = 'flex';
+                loginContainer.style.display = 'none';
+                appContainer.style.display = 'flex';
+            } else {
+                loginError.style.display = 'block';
+            }
         });
 
         function cerrarSesion() {
             appContainer.style.display = 'none';
             loginContainer.style.display = 'flex';
             loginForm.reset();
+            loginError.style.display = 'none';
         }
 
         // Sistema de navegación entre pestañas
