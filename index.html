@@ -157,12 +157,23 @@
         }
         .btn-dni-mode:hover { background-color: #117a8b; }
         
+        .btn-reload-data {
+            background-color: #17a2b8;
+            padding: 10px;
+            font-size: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-reload-data:hover { background-color: #117a8b; }
+
         #scanner-container, #database-screen, #employees-screen, #manual-dni-screen {
             display: none;
             margin-top: 15px;
         }
 
-        /* Corrección aplicada aquí para restaurar el tamaño correcto de la cámara */
         video {
             width: 100%;
             height: auto;
@@ -242,7 +253,7 @@
             font-size: 16px;
             border: 2px solid var(--border-color);
             border-radius: 8px;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             box-sizing: border-box;
             background: var(--card-bg);
             color: var(--text-color);
@@ -256,7 +267,7 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
-            max-height: 55vh;
+            max-height: 50vh;
             overflow-y: auto;
             padding-right: 4px;
             margin-bottom: 15px;
@@ -403,6 +414,7 @@
         <!-- Vista de Asistencias en Tarjetas -->
         <div id="database-screen">
             <input type="text" id="searchAsistencia" class="search-input" placeholder="🔍 Buscar por DNI o Nombre..." oninput="filtrarAsistencias()">
+            <button class="btn btn-reload-data" onclick="cargarAsistenciasGviz()">🔄 Actualizar Asistencias</button>
             <div id="asistenciasCardsContainer" class="cards-list">
                 <div class="loading-text">Cargando registros...</div>
             </div>
@@ -412,6 +424,7 @@
         <!-- Vista de Empleados en Tarjetas -->
         <div id="employees-screen">
             <input type="text" id="searchEmpleado" class="search-input" placeholder="🔍 Buscar empleado o cargo..." oninput="filtrarEmpleados()">
+            <button class="btn btn-reload-data" style="background-color: #6f42c1;" onclick="cargarEmpleadosGviz()">🔄 Actualizar Empleados</button>
             <div id="empleadosCardsContainer" class="cards-list">
                 <div class="loading-text">Cargando empleados...</div>
             </div>
@@ -612,6 +625,7 @@
         function mostrarBaseDatos() {
             document.getElementById("home-screen").style.display = "none";
             document.getElementById("database-screen").style.display = "block";
+            document.getElementById("searchAsistencia").value = "";
             cargarAsistenciasGviz();
         }
 
@@ -622,9 +636,9 @@
 
         function cargarAsistenciasGviz() {
             const container = document.getElementById("asistenciasCardsContainer");
-            container.innerHTML = '<div class="loading-text">Cargando asistencias...</div>';
+            container.innerHTML = '<div class="loading-text">Actualizando asistencias...</div>';
             
-            const gvizUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&gid=0`;
+            const gvizUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&gid=0&cachebuster=` + new Date().getTime();
 
             fetch(gvizUrl)
                 .then(res => res.text())
@@ -694,6 +708,7 @@
         function mostrarEmpleados() {
             document.getElementById("home-screen").style.display = "none";
             document.getElementById("employees-screen").style.display = "block";
+            document.getElementById("searchEmpleado").value = "";
             cargarEmpleadosGviz();
         }
 
@@ -704,9 +719,9 @@
 
         function cargarEmpleadosGviz() {
             const container = document.getElementById("empleadosCardsContainer");
-            container.innerHTML = '<div class="loading-text">Cargando lista de empleados...</div>';
+            container.innerHTML = '<div class="loading-text">Actualizando lista de empleados...</div>';
 
-            const gvizUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&gid=1678483593`;
+            const gvizUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&gid=1678483593&cachebuster=` + new Date().getTime();
 
             fetch(gvizUrl)
                 .then(res => res.text())
