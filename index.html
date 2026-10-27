@@ -18,6 +18,7 @@
             --border-color: #e0e0e0;
             --history-bg: #fdfdfd;
             --item-border: #eee;
+            --accent-color: #007bff;
         }
 
         [data-theme="dark"] {
@@ -28,6 +29,7 @@
             --border-color: #333333;
             --history-bg: #252525;
             --item-border: #333;
+            --accent-color: #375a7f;
         }
 
         body {
@@ -44,6 +46,7 @@
             touch-action: manipulation;
             -webkit-text-size-adjust: 100%;
         }
+
         .container {
             max-width: 480px;
             width: 100%;
@@ -54,9 +57,9 @@
             text-align: center;
             position: relative;
             transition: background 0.3s ease;
+            box-sizing: border-box;
         }
         
-        /* Encabezado con Logo, Títulos y Configuración */
         .header-box {
             display: flex;
             align-items: center;
@@ -65,6 +68,7 @@
             margin-bottom: 25px;
             padding-top: 5px;
         }
+
         .company-logo {
             position: absolute;
             left: 0;
@@ -76,12 +80,14 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             padding: 2px;
         }
+
         .header-titles {
             text-align: center;
             width: 100%;
             padding-left: 50px;
             padding-right: 40px;
         }
+
         .company-title {
             font-size: 16px;
             font-weight: 800;
@@ -98,7 +104,6 @@
             margin: 4px 0 0 0;
         }
 
-        /* Botón de Ajustes (Engranaje) */
         .settings-btn {
             position: absolute;
             right: 0;
@@ -145,12 +150,6 @@
             font-size: 16px;
         }
         .btn-employees:hover { background-color: #5a32a3; }
-        .btn-reload {
-            background-color: #6c757d;
-            padding: 12px;
-            font-size: 16px;
-        }
-        .btn-reload:hover { background-color: #5a6268; }
         .btn-dni-mode {
             background-color: #17a2b8;
             padding: 14px;
@@ -162,6 +161,7 @@
             display: none;
             margin-top: 15px;
         }
+
         video {
             width: 100%;
             max-height: 320px;
@@ -170,6 +170,7 @@
             border: 2px solid #007bff;
             margin-bottom: 10px;
         }
+
         .alert {
             margin-top: 15px;
             padding: 12px;
@@ -182,7 +183,6 @@
         .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
         .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
 
-        /* Estilos del historial local */
         .history-container {
             margin-top: 25px;
             background: var(--history-bg);
@@ -192,6 +192,7 @@
             text-align: left;
             transition: background 0.3s ease, border 0.3s ease;
         }
+
         .history-title {
             font-size: 15px;
             font-weight: bold;
@@ -203,6 +204,7 @@
             justify-content: space-between;
             align-items: center;
         }
+
         .history-list {
             list-style: none;
             padding: 0;
@@ -210,6 +212,7 @@
             max-height: 200px;
             overflow-y: auto;
         }
+
         .history-item {
             font-size: 14px;
             padding: 10px 0;
@@ -218,10 +221,12 @@
             justify-content: space-between;
             align-items: center;
         }
+
         .history-name {
             font-weight: bold;
             color: var(--text-color);
         }
+
         .history-time {
             color: var(--subtext-color);
             font-size: 12px;
@@ -229,21 +234,91 @@
             margin-left: 10px;
         }
 
-        /* Input DNI manual */
-        .dni-input {
+        .dni-input, .search-input {
             width: 100%;
-            padding: 14px;
-            font-size: 18px;
-            border: 2px solid #ccc;
+            padding: 12px 14px;
+            font-size: 16px;
+            border: 2px solid var(--border-color);
             border-radius: 8px;
             margin-bottom: 15px;
             box-sizing: border-box;
-            text-align: center;
             background: var(--card-bg);
+            color: var(--text-color);
+            outline: none;
+        }
+
+        .dni-input { text-align: center; font-size: 18px; }
+        .search-input:focus { border-color: #007bff; }
+
+        /* Estilos de las Tarjetas para Asistencias y Empleados */
+        .cards-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 55vh;
+            overflow-y: auto;
+            padding-right: 4px;
+            margin-bottom: 15px;
+        }
+
+        .data-card {
+            background: var(--history-bg);
+            border: 1px solid var(--border-color);
+            border-left: 5px solid #007bff;
+            border-radius: 10px;
+            padding: 14px;
+            text-align: left;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .card-header-line {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-title-text {
+            font-size: 15px;
+            font-weight: 700;
             color: var(--text-color);
         }
 
-        /* Modal de Configuración */
+        .card-tag {
+            font-size: 11px;
+            background: rgba(0,123,255,0.12);
+            color: #007bff;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+
+        .card-detail {
+            font-size: 13px;
+            color: var(--subtext-color);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .card-meta-line {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--subtext-color);
+            margin-top: 4px;
+            padding-top: 6px;
+            border-top: 1px dashed var(--border-color);
+        }
+
+        .loading-text {
+            color: var(--subtext-color);
+            font-size: 14px;
+            padding: 20px 0;
+        }
+
         .modal {
             display: none;
             position: fixed;
@@ -254,6 +329,7 @@
             align-items: center;
             justify-content: center;
         }
+
         .modal-content {
             background-color: var(--card-bg);
             color: var(--text-color);
@@ -264,7 +340,9 @@
             text-align: center;
             box-shadow: 0 5px 15px rgba(0,0,0,0.3);
         }
+
         .modal-content h3 { margin-top: 0; color: #007bff; }
+
         .modal-btn {
             background-color: #f1f1f1;
             color: #333;
@@ -281,21 +359,6 @@
         .modal-btn:hover { background-color: #e0e0e0; }
         [data-theme="dark"] .modal-btn { background-color: #333; color: #fff; }
         [data-theme="dark"] .modal-btn:hover { background-color: #444; }
-
-        /* Contenedor del Iframe */
-        .iframe-wrapper {
-            width: 100%;
-            height: 60vh;
-            border-radius: 8px;
-            overflow: hidden;
-            border: 2px solid var(--border-color);
-            margin-bottom: 15px;
-        }
-        iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
     </style>
 </head>
 <body data-theme="light">
@@ -313,7 +376,7 @@
         <div id="home-screen">
             <button class="btn" onclick="iniciarEscanner()">⚡ Iniciar control de asistencia</button>
             <button class="btn btn-dni-mode" onclick="mostrarPantallaDni()">🆔 Registrar con DNI</button>
-            <button class="btn btn-database" onclick="mostrarBaseDatos()">📊 Ver base todas las asistencias</button>
+            <button class="btn btn-database" onclick="mostrarBaseDatos()">📊 Ver todas las asistencias</button>
             <button class="btn btn-employees" onclick="mostrarEmpleados()">👥 Ver lista de empleados</button>
 
             <div class="history-container">
@@ -336,21 +399,20 @@
             <button class="btn btn-secondary" onclick="ocultarPantallaDni()">Volver al Inicio</button>
         </div>
 
+        <!-- Vista de Asistencias en Tarjetas -->
         <div id="database-screen">
-            <p style="color: #dc3545; font-weight: bold; font-size: 15px; margin-bottom: 10px;">
-                Recarga la página para ver los últimos registros
-            </p>
-            <button class="btn btn-reload" style="margin-bottom: 20px;" onclick="location.reload()">🔄 Recargar Página</button>
-
-            <div class="iframe-wrapper">
-                <iframe src="https://docs.google.com/spreadsheets/d/18MHyH8JnecfC4i4ih0PRfffTR0DkRQWdKxaky9ziUw0/htmlembed?gid=0&widget=false&chrome=false" title="Base de Datos Asistencia"></iframe>
+            <input type="text" id="searchAsistencia" class="search-input" placeholder="🔍 Buscar por DNI o Nombre..." oninput="filtrarAsistencias()">
+            <div id="asistenciasCardsContainer" class="cards-list">
+                <div class="loading-text">Cargando registros...</div>
             </div>
             <button class="btn btn-secondary" onclick="ocultarBaseDatos()">Volver al Inicio</button>
         </div>
 
+        <!-- Vista de Empleados en Tarjetas -->
         <div id="employees-screen">
-            <div class="iframe-wrapper">
-                <iframe src="https://docs.google.com/spreadsheets/d/18MHyH8JnecfC4i4ih0PRfffTR0DkRQWdKxaky9ziUw0/htmlembed?gid=1678483593&widget=false&chrome=false" title="Lista de Empleados"></iframe>
+            <input type="text" id="searchEmpleado" class="search-input" placeholder="🔍 Buscar empleado o cargo..." oninput="filtrarEmpleados()">
+            <div id="empleadosCardsContainer" class="cards-list">
+                <div class="loading-text">Cargando empleados...</div>
             </div>
             <button class="btn btn-secondary" onclick="ocultarEmpleados()">Volver al Inicio</button>
         </div>
@@ -380,11 +442,15 @@
         }, false);
 
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxBiAQFpY8hz6bxEgOkKjXtehEgwzEtv-7TunbzO2P29YnwwBujOFgZwfSxnyJxyhhU/exec";
+        const SPREADSHEET_ID = "18MHyH8JnecfC4i4ih0PRfffTR0DkRQWdKxaky9ziUw0";
         
         let empleadosMap = {};
         let codeReader = null;
         let scanningActive = false;
         let ultimosEscaneos = {}; 
+
+        let rawAsistencias = [];
+        let rawEmpleados = [];
 
         window.onload = function() {
             cargarHistorial();
@@ -396,17 +462,21 @@
         };
 
         function descargarListaEmpleados() {
-            const csvUrl = "https://docs.google.com/spreadsheets/export?format=csv&id=18MHyH8JnecfC4i4ih0PRfffTR0DkRQWdKxaky9ziUw0&gid=1678483593";
+            const csvUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&gid=1678483593`;
             fetch(csvUrl)
                 .then(response => response.text())
                 .then(data => {
                     const lineas = data.split('\n');
+                    empleadosMap = {};
+                    rawEmpleados = [];
                     for(let i = 1; i < lineas.length; i++) {
-                        const columnas = lineas[i].split(',');
-                        if(columnas.length >= 2) {
-                            const dni = columnas[0].replace(/["\r]/g, '').trim();
-                            const nombre = columnas[1].replace(/["\r]/g, '').trim();
-                            if(dni) empleadosMap[dni] = nombre;
+                        const columnas = lineas[i].split(',').map(c => c.replace(/["\r]/g, '').trim());
+                        if(columnas.length >= 2 && columnas[0]) {
+                            const dni = columnas[0];
+                            const nombre = columnas[1] || "Sin nombre";
+                            const cargo = columnas[2] || "Personal";
+                            empleadosMap[dni] = nombre;
+                            rawEmpleados.push({ dni, nombre, cargo });
                         }
                     }
                 })
@@ -537,9 +607,11 @@
             ocultarPantallaDni();
         }
 
+        /* --- Carga y Filtrado de Asistencias --- */
         function mostrarBaseDatos() {
             document.getElementById("home-screen").style.display = "none";
             document.getElementById("database-screen").style.display = "block";
+            cargarAsistenciasGviz();
         }
 
         function ocultarBaseDatos() {
@@ -547,10 +619,82 @@
             document.getElementById("home-screen").style.display = "block";
         }
 
-        /* --- Funciones para la Pantalla de Empleados --- */
+        function cargarAsistenciasGviz() {
+            const container = document.getElementById("asistenciasCardsContainer");
+            container.innerHTML = '<div class="loading-text">Cargando asistencias...</div>';
+            
+            const gvizUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&gid=0`;
+
+            fetch(gvizUrl)
+                .then(res => res.text())
+                .then(text => {
+                    const jsonString = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
+                    const data = JSON.parse(jsonString);
+                    const rows = data.table.rows;
+
+                    rawAsistencias = [];
+                    rows.forEach(r => {
+                        if (r.c) {
+                            const fechaHora = r.c[0] ? r.c[0].f || r.c[0].v || '' : '';
+                            const dni = r.c[1] ? String(r.c[1].v || '').trim() : '';
+                            const nombreSheet = r.c[2] ? String(r.c[2].v || '').trim() : '';
+                            const nombreFinal = empleadosMap[dni] || nombreSheet || 'Empleado';
+
+                            if (dni || fechaHora) {
+                                rawAsistencias.push({ fechaHora, dni, nombre: nombreFinal });
+                            }
+                        }
+                    });
+
+                    // Invertir el orden para que el último registro aparezca primero
+                    rawAsistencias.reverse();
+                    renderAsistencias(rawAsistencias);
+                })
+                .catch(err => {
+                    container.innerHTML = '<div class="loading-text" style="color:#dc3545;">Error al cargar los registros de asistencia.</div>';
+                });
+        }
+
+        function renderAsistencias(lista) {
+            const container = document.getElementById("asistenciasCardsContainer");
+            container.innerHTML = "";
+
+            if (lista.length === 0) {
+                container.innerHTML = '<div class="loading-text">No se encontraron registros.</div>';
+                return;
+            }
+
+            lista.forEach(item => {
+                const card = document.createElement("div");
+                card.className = "data-card";
+                card.innerHTML = `
+                    <div class="card-header-line">
+                        <span class="card-title-text">${item.nombre}</span>
+                        <span class="card-tag">REGISTRADO</span>
+                    </div>
+                    <div class="card-detail">🆔 DNI: <strong>${item.dni}</strong></div>
+                    <div class="card-meta-line">
+                        <span>📅 Fecha/Hora:</span>
+                        <span><strong>${item.fechaHora}</strong></span>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function filtrarAsistencias() {
+            const query = document.getElementById("searchAsistencia").value.toLowerCase();
+            const filtrados = rawAsistencias.filter(a => 
+                a.nombre.toLowerCase().includes(query) || a.dni.toLowerCase().includes(query)
+            );
+            renderAsistencias(filtrados);
+        }
+
+        /* --- Carga y Filtrado de Empleados --- */
         function mostrarEmpleados() {
             document.getElementById("home-screen").style.display = "none";
             document.getElementById("employees-screen").style.display = "block";
+            cargarEmpleadosGviz();
         }
 
         function ocultarEmpleados() {
@@ -558,6 +702,75 @@
             document.getElementById("home-screen").style.display = "block";
         }
 
+        function cargarEmpleadosGviz() {
+            const container = document.getElementById("empleadosCardsContainer");
+            container.innerHTML = '<div class="loading-text">Cargando lista de empleados...</div>';
+
+            const gvizUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&gid=1678483593`;
+
+            fetch(gvizUrl)
+                .then(res => res.text())
+                .then(text => {
+                    const jsonString = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
+                    const data = JSON.parse(jsonString);
+                    const rows = data.table.rows;
+
+                    rawEmpleados = [];
+                    rows.forEach(r => {
+                        if (r.c) {
+                            const dni = r.c[0] ? String(r.c[0].v || '').trim() : '';
+                            const nombre = r.c[1] ? String(r.c[1].v || '').trim() : '';
+                            const cargo = r.c[2] ? String(r.c[2].v || '').trim() : 'Personal';
+
+                            if (dni && nombre) {
+                                rawEmpleados.push({ dni, nombre, cargo });
+                                empleadosMap[dni] = nombre;
+                            }
+                        }
+                    });
+
+                    renderEmpleados(rawEmpleados);
+                })
+                .catch(err => {
+                    container.innerHTML = '<div class="loading-text" style="color:#dc3545;">Error al cargar lista de empleados.</div>';
+                });
+        }
+
+        function renderEmpleados(lista) {
+            const container = document.getElementById("empleadosCardsContainer");
+            container.innerHTML = "";
+
+            if (lista.length === 0) {
+                container.innerHTML = '<div class="loading-text">No se encontraron empleados.</div>';
+                return;
+            }
+
+            lista.forEach(emp => {
+                const card = document.createElement("div");
+                card.className = "data-card";
+                card.style.borderLeftColor = "#6f42c1";
+                card.innerHTML = `
+                    <div class="card-header-line">
+                        <span class="card-title-text">${emp.nombre}</span>
+                        <span class="card-tag" style="color:#6f42c1; background:rgba(111,66,193,0.12);">${emp.cargo}</span>
+                    </div>
+                    <div class="card-detail">🆔 DNI: <strong>${emp.dni}</strong></div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function filtrarEmpleados() {
+            const query = document.getElementById("searchEmpleado").value.toLowerCase();
+            const filtrados = rawEmpleados.filter(e => 
+                e.nombre.toLowerCase().includes(query) || 
+                e.dni.toLowerCase().includes(query) || 
+                e.cargo.toLowerCase().includes(query)
+            );
+            renderEmpleados(filtrados);
+        }
+
+        /* --- Configuración e Historial --- */
         function abrirConfiguracion() {
             document.getElementById("settingsModal").style.display = "flex";
         }
