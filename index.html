@@ -162,13 +162,15 @@
             margin-top: 15px;
         }
 
+        /* Corrección aplicada aquí para restaurar el tamaño correcto de la cámara */
         video {
             width: 100%;
-            max-height: 320px;
+            height: auto;
+            max-height: 380px;
             border-radius: 8px;
-            object-fit: cover;
             border: 2px solid #007bff;
             margin-bottom: 10px;
+            background: #000;
         }
 
         .alert {
@@ -250,7 +252,6 @@
         .dni-input { text-align: center; font-size: 18px; }
         .search-input:focus { border-color: #007bff; }
 
-        /* Estilos de las Tarjetas para Asistencias y Empleados */
         .cards-list {
             display: flex;
             flex-direction: column;
@@ -646,7 +647,6 @@
                         }
                     });
 
-                    // Invertir el orden para que el último registro aparezca primero
                     rawAsistencias.reverse();
                     renderAsistencias(rawAsistencias);
                 })
